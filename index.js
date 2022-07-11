@@ -44,7 +44,7 @@ class DatePicker {
 
   goToYear(e) {
     let year = this.date.getFullYear();
-    if (e.target.textContent === '>') {
+    if (e.target.classList.contains('next')) {
       year += this.notManualEditing;
     } else {
       year -= this.notManualEditing;
@@ -173,20 +173,27 @@ class DatePicker {
   }
 
   populateYears() {
-    this.notManualEditing = 12;
-    this.monthElement.textContent = this.date.getFullYear() + ' - ' + (this.date.getFullYear() + 11);
+    this.notManualEditing = 10;
+    this.monthElement.textContent = this.date.getFullYear() + ' - ' + (this.date.getFullYear() + 9);
     this.daysElement.innerHTML = '';
 
     this.monthElement.removeEventListener('click', this.populateYears);
 
     for (let i = 0; i < 12; i++) {
-      let year = this.date.getFullYear() + i;
+      let year = this.date.getFullYear() - 1 + i;
       let yearEl = document.createElement('div');
+
       yearEl.classList.add('day');
       yearEl.textContent = year.toString();
 
       if (this.selectedDate.getFullYear() === year) {
         yearEl.classList.add('selected');
+      }
+
+      if (i === 0) {
+        yearEl.classList.add('prev');
+      } else if (i === 11) {
+        yearEl.classList.add('next');
       }
 
       yearEl.addEventListener('click', () => {
@@ -206,9 +213,9 @@ class DatePicker {
     
     <div class="dates">
         <div class="month-header">
-            <div class="arrows prev-mth">&lt;</div>
+            <div class="arrows prev">&lt;</div>
             <div class="mth"></div>
-            <div class="arrows next-mth">&gt;</div>
+            <div class="arrows next">&gt;</div>
         </div>
         <div class="weekDays"></div>
         <div class="visible-area days"></div>
@@ -217,8 +224,8 @@ class DatePicker {
 
     this.selectedDateElement = this.element.querySelector(`.selected-date`);
     this.monthElement = this.element.querySelector(`.mth`);
-    this.nextMonthElement = this.element.querySelector(`.next-mth`);
-    this.prevMonthElement = this.element.querySelector(`.prev-mth`);
+    this.nextMonthElement = this.element.querySelector(`.next`);
+    this.prevMonthElement = this.element.querySelector(`.prev`);
     this.daysElement = this.element.querySelector(`.days`);
     this.weekDays = this.element.querySelector(`.weekDays`);
 
