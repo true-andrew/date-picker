@@ -10,19 +10,14 @@ const weekDayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 
 let date = new Date();
-let day = date.getDate();
-let month = date.getMonth();
-let year = date.getFullYear();
+let day, month, year;
 
 let selectedDate = new Date(date);
-let selectedDay = day;
-let selectedMonth = month;
-let selectedYear = year;
+let selectedDay, selectedMonth, selectedYear;
 
-monthElement.textContent = months[month] + ' ' + year;
+monthElement.textContent = months[selectedDate.getMonth()] + ' ' + selectedDate.getFullYear();
+selectedDateElement.value = formatDate(selectedDate);
 
-selectedDateElement.value = formatDate(date);
-selectedDateElement.dataset.value = selectedDate;
 for (let dayName of weekDayNames) {
   weekDays.innerHTML += `<div>${dayName}</div>`
 }
@@ -93,21 +88,21 @@ function populateDates() {
   }
 
   for (let i = 0; i < amount_days; i++) {
-    const day_element = document.createElement('div');
-    day_element.classList.add('day');
-    day_element.textContent = String(i + 1);
+    const dayElement = document.createElement('div');
+    dayElement.classList.add('day');
+    dayElement.textContent = String(i + 1);
 
     if (selectedDay === (i + 1) && selectedYear === year && selectedMonth === month) {
-      day_element.classList.add('selected');
+      dayElement.classList.add('selected');
     }
 
-    day_element.addEventListener('click', function () {
+    dayElement.addEventListener('click', function () {
       selectedDate = new Date(year, month, i + 1);
       selectedDateElement.value = formatDate(selectedDate);
       populateDates();
     });
 
-    daysElement.appendChild(day_element);
+    daysElement.appendChild(dayElement);
   }
 
   for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
@@ -128,7 +123,7 @@ function populateDates() {
 
 function handleChange(e) {
   let input = e.target.value;
-  let testRegExr = /^(\d{2}).(\d{2}).(\d{4})$/;
+  let testRegExr = /^(\d{2})\.(\d{2})\.(\d{4})$/;
   let test = input.match(testRegExr);
 
   if (test) {
