@@ -125,7 +125,7 @@ function goToNextMonth() {
 }
 
 function goToPrevMonth() {
-  let month = this.date.getMonth()-1;
+  let month = this.date.getMonth() - 1;
   let year = this.date.getFullYear();
   if (month === -1) {
     month = 11;
@@ -170,11 +170,16 @@ function handleChange(e) {
   let testRegExr = /^(\d{2})\.(\d{2})\.(\d{4})$/;
   let test = input.match(testRegExr);
 
+  if (/[^\d.]/g.test(input)) {
+    e.target.value = formatDate(this.selectedDate);
+    return;
+  }
+
   if (test) {
     const [, inpDay, inpMonth, inpYear] = test;
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
-      alert('Неправильное значение даты');
+      e.target.value = formatDate(this.selectedDate);
       return;
     }
     this.selectedDate = new Date(this.date);
