@@ -44,7 +44,7 @@ body {
     background-color: #FFF;
 }
 
-.date-picker .dates .month {
+.date-picker .dates .month-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -52,7 +52,15 @@ body {
     border-top: 2px solid #EEE;
 }
 
-.date-picker .dates .month .arrows {
+.mth {
+    padding: 5px;
+}
+
+.mth:hover {
+    background-color: #F3F3F3;
+}
+
+.date-picker .dates .month-header .arrows {
     width: 35px;
     height: 35px;
     display: flex;
@@ -62,11 +70,11 @@ body {
     font-size: 20px;
 }
 
-.date-picker .dates .month .arrows:hover {
+.date-picker .dates .month-header .arrows:hover {
     background-color: #F3F3F3;
 }
 
-.date-picker .dates .month .arrows:active {
+.date-picker .dates .month-header .arrows:active {
     background-color: #00CA85;
 }
 
@@ -82,10 +90,13 @@ body {
     align-items: center;
 }
 
-.date-picker .dates .days {
+.visible-area {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
     height: 200px;
+}
+
+.days {
+    grid-template-columns: repeat(7, 1fr);
 }
 
 
@@ -106,4 +117,8 @@ body {
 
 .prev, .next {
     color: #c5c5c5;
+}
+
+.months {
+    grid-template-columns: repeat(3, 1fr);
 }

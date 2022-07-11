@@ -6,10 +6,64 @@ class DatePicker {
     this.element = document.getElementById(id);
     this.date = new Date();
     this.selectedDate = new Date();
+    this.notManualEditing = 0;
+    this.populateMonths = this.populateMonths.bind(this);
+    this.populateYears = this.populateYears.bind(this);
+    this.goToNextMonth = this.goToNextMonth.bind(this);
+    this.goToPrevMonth = this.goToPrevMonth.bind(this);
+    this.goToYear = this.goToYear.bind(this);
+  }
+
+  goToNextMonth() {
+    let month = this.date.getMonth() + 1;
+    let year = this.date.getFullYear();
+    if (month === 12) {
+      month = 0;
+      year++;
+      this.date.setFullYear(year);
+    }
+    this.date.setMonth(month);
+    this.monthElement.textContent = MONTHS[month] + ' ' + year;
+    this.selectedDateElement.value = formatDate(this.selectedDate);
+    this.populateDates();
+  }
+
+  goToPrevMonth() {
+    let month = this.date.getMonth() - 1;
+    let year = this.date.getFullYear();
+    if (month === -1) {
+      month = 11;
+      year--;
+      this.date.setFullYear(year);
+    }
+    this.date.setMonth(month);
+    this.monthElement.textContent = MONTHS[month] + ' ' + year;
+    this.selectedDateElement.value = formatDate(this.selectedDate);
+    this.populateDates();
+  }
+
+  goToYear(e) {
+    let year = this.date.getFullYear();
+    if (e.target.textContent === '>') {
+      year += this.notManualEditing;
+    } else {
+      year -= this.notManualEditing;
+    }
+    this.date.setFullYear(year);
+    this.selectedDate.setFullYear(year);
+    this.selectedDateElement.value = formatDate(this.selectedDate);
+
+    if (this.notManualEditing === 1) {
+      this.populateMonths();
+      return;
+    }
+    this.populateYears();
   }
 
   populateDates() {
+    this.daysElement.classList.replace('months', 'days');
     this.daysElement.innerHTML = '';
+    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
 
     let month = this.date.getMonth();
     let year = this.date.getFullYear();
@@ -34,7 +88,7 @@ class DatePicker {
         this.selectedDateElement.value = formatDate(this.selectedDate);
       });
 
-      dayElement.addEventListener('click', goToPrevMonth.bind(this));
+      dayElement.addEventListener('click', this.goToPrevMonth);
     }
 
     for (let i = 0; i < amount_days; i++) {
@@ -67,7 +121,82 @@ class DatePicker {
         this.selectedDateElement.value = formatDate(this.selectedDate);
       });
 
-      dayElement.addEventListener('click', goToNextMonth.bind(this));
+      dayElement.addEventListener('click', this.goToNextMonth);
+    }
+  }
+
+  populateMonths() {
+    this.notManualEditing = 1;
+    this.monthElement.textContent = this.selectedDate.getFullYear().toString();
+
+    this.monthElement.removeEventListener('click', this.populateMonths);
+    this.monthElement.addEventListener('click', this.populateYears);
+    this.prevMonthElement.removeEventListener('click', this.goToPrevMonth);
+    this.prevMonthElement.addEventListener('click', this.goToYear);
+    this.nextMonthElement.removeEventListener('click', this.goToNextMonth);
+    this.nextMonthElement.addEventListener('click', this.goToYear);
+
+    this.weekDays.style = 'display: none;';
+    this.daysElement.innerHTML = '';
+    this.daysElement.classList.replace('days', 'months');
+
+    for (let i = 0; i < MONTHS.length; i++) {
+      let month = MONTHS[i];
+      let monthEl = document.createElement('div');
+
+      if (this.selectedDate.getFullYear() === this.date.getFullYear() && this.selectedDate.getMonth() === i) {
+        monthEl.classList.add('selected');
+      }
+
+      monthEl.classList.add('day');
+      monthEl.textContent = month;
+
+      monthEl.addEventListener('click', () => {
+        this.weekDays.style = '';
+        this.daysElement.classList.replace('months', 'days');
+        this.selectedDate.setMonth(i);
+        this.date.setMonth(i);
+        this.selectedDateElement.value = formatDate(this.selectedDate);
+        this.monthElement.addEventListener('click', this.populateMonths);
+        this.nextMonthElement.removeEventListener('click', this.goToYear);
+        this.prevMonthElement.removeEventListener('click', this.goToYear);
+        this.nextMonthElement.addEventListener('click', this.goToNextMonth);
+        this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
+        this.notManualEditing = false;
+        this.populateDates();
+      })
+
+      this.daysElement.appendChild(monthEl);
+    }
+
+
+  }
+
+  populateYears() {
+    this.notManualEditing = 12;
+    this.monthElement.textContent = this.date.getFullYear() + ' - ' + (this.date.getFullYear() + 11);
+    this.daysElement.innerHTML = '';
+
+    this.monthElement.removeEventListener('click', this.populateYears);
+
+    for (let i = 0; i < 12; i++) {
+      let year = this.date.getFullYear() + i;
+      let yearEl = document.createElement('div');
+      yearEl.classList.add('day');
+      yearEl.textContent = year.toString();
+
+      if (this.selectedDate.getFullYear() === year) {
+        yearEl.classList.add('selected');
+      }
+
+      yearEl.addEventListener('click', () => {
+        this.date.setFullYear(year);
+        this.selectedDate.setFullYear(year);
+        this.selectedDateElement.value = formatDate(this.selectedDate);
+        this.populateMonths();
+      });
+
+      this.daysElement.appendChild(yearEl);
     }
   }
 
@@ -76,13 +205,13 @@ class DatePicker {
     <label><input class="selected-date" placeholder="DD.MM.YYYY" minlength="10" maxlength="10" type="text" pattern="(\\d{2}\\.){2}\\d{4}"></label>
     
     <div class="dates">
-        <div class="month">
+        <div class="month-header">
             <div class="arrows prev-mth">&lt;</div>
             <div class="mth"></div>
             <div class="arrows next-mth">&gt;</div>
         </div>
         <div class="weekDays"></div>
-        <div class="days"></div>
+        <div class="visible-area days"></div>
     </div>
     `;
 
@@ -93,7 +222,6 @@ class DatePicker {
     this.daysElement = this.element.querySelector(`.days`);
     this.weekDays = this.element.querySelector(`.weekDays`);
 
-    this.monthElement.textContent = MONTHS[this.selectedDate.getMonth()] + ' ' + this.selectedDate.getFullYear();
     this.selectedDateElement.value = formatDate(this.selectedDate);
 
     for (let dayName of WEEK_DAY_NAMES) {
@@ -101,8 +229,9 @@ class DatePicker {
     }
 
     this.selectedDateElement.addEventListener('input', handleChange.bind(this));
-    this.nextMonthElement.addEventListener('click', goToNextMonth.bind(this));
-    this.prevMonthElement.addEventListener('click', goToPrevMonth.bind(this));
+    this.nextMonthElement.addEventListener('click', this.goToNextMonth);
+    this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
+    this.monthElement.addEventListener('click', this.populateMonths);
 
 
     this.populateDates();
@@ -110,32 +239,31 @@ class DatePicker {
 }
 
 //Functions
-function goToNextMonth() {
-  let month = this.date.getMonth() + 1;
-  let year = this.date.getFullYear();
-  if (month === 12) {
-    month = 0;
-    year++;
-    this.date.setFullYear(year);
+function handleChange(e) {
+  if (this.notManualEditing) {
+    e.target.value = formatDate(this.selectedDate);
+    return;
   }
-  this.date.setMonth(month);
-  this.monthElement.textContent = MONTHS[month] + ' ' + year;
-  this.selectedDateElement.value = formatDate(this.selectedDate);
-  this.populateDates();
-}
+  let input = e.target.value;
+  let testRegExr = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+  let test = input.match(testRegExr);
 
-function goToPrevMonth() {
-  let month = this.date.getMonth() - 1;
-  let year = this.date.getFullYear();
-  if (month === -1) {
-    month = 11;
-    year--;
-    this.date.setFullYear(year);
+  if (/[^\d.]/g.test(input)) {
+    e.target.value = formatDate(this.selectedDate);
+    return;
   }
-  this.date.setMonth(month);
-  this.monthElement.textContent = MONTHS[month] + ' ' + year;
-  this.selectedDateElement.value = formatDate(this.selectedDate);
-  this.populateDates();
+
+  if (test) {
+    const [, inpDay, inpMonth, inpYear] = test;
+    this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
+    if (this.date.toString() === 'Invalid Date') {
+      e.target.value = formatDate(this.selectedDate);
+      return;
+    }
+    this.selectedDate = new Date(this.date);
+    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
+    this.populateDates();
+  }
 }
 
 //Helper Functions
@@ -165,32 +293,6 @@ function getLocalDay(date) {
   return day;
 }
 
-function handleChange(e) {
-  let input = e.target.value;
-  let testRegExr = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-  let test = input.match(testRegExr);
-
-  if (/[^\d.]/g.test(input)) {
-    e.target.value = formatDate(this.selectedDate);
-    return;
-  }
-
-  if (test) {
-    const [, inpDay, inpMonth, inpYear] = test;
-    this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
-    if (this.date.toString() === 'Invalid Date') {
-      e.target.value = formatDate(this.selectedDate);
-      return;
-    }
-    this.selectedDate = new Date(this.date);
-    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
-    this.populateDates();
-  }
-}
-
 
 const calendar1 = new DatePicker('date-picker-1');
 calendar1.render();
-
-const calendar2 = new DatePicker('date-picker-2');
-calendar2.render();
