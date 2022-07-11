@@ -7,6 +7,7 @@
 body {
     background-color: #FFCE00;
     font-family: 'Saira', Arial, Helvetica, sans-serif;
+    display: flex;
 }
 .date-picker {
     position: relative;
