@@ -6,6 +6,7 @@ class DatePicker {
     this.element = document.getElementById(id);
     this.date = new Date();
     this.selectedDate = new Date();
+    this.todayDate = new Date();
     this.notManualEditing = 0;
     this.populateMonths = this.populateMonths.bind(this);
     this.populateYears = this.populateYears.bind(this);
@@ -64,10 +65,11 @@ class DatePicker {
   }
 
   handleDayClick(e) {
-    const newDate = e.target.dataset;
+    const {year, month, day} = e.target.dataset;
     const prev = e.target.classList.contains('prev');
     const next = e.target.classList.contains('next');
-    this.selectedDate = new Date(newDate.year + '-' + newDate.month + '-' + newDate.day);
+    this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
+    console.log(this.selectedDate)
     this.selectedDateElement.value = formatDate(this.selectedDate);
     if (prev || next) {
       prev ? this.goToPrevMonth() : this.goToNextMonth();
@@ -127,10 +129,11 @@ class DatePicker {
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
       const dayElement = document.createElement('div');
+
       dayElement.classList.add('day', 'prev');
       dayElement.textContent = String(lastDayMonthBefore - i + 1);
       dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = month.toString();
+      dayElement.dataset.month = (month - 1).toString();
       dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
       this.daysElement.appendChild(dayElement);
 
@@ -143,8 +146,8 @@ class DatePicker {
       dayElement.textContent = String(i + 1);
       dayElement.id = 'day' + (i + 1);
       dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = (month+1).toString();
-      dayElement.dataset.day = (i+1).toString();
+      dayElement.dataset.month = (month).toString();
+      dayElement.dataset.day = (i + 1).toString();
 
       if (selectedDay === (i + 1) && selectedYear === year && selectedMonth === month) {
         dayElement.classList.add('selected');
@@ -162,7 +165,7 @@ class DatePicker {
       dayElement.classList.add('day', 'next');
       dayElement.textContent = String(firstDayNextMonth++);
       dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = (month+2).toString();
+      dayElement.dataset.month = (month + 1).toString();
       dayElement.dataset.day = dayNumber.toString();
       this.daysElement.appendChild(dayElement);
 
@@ -217,6 +220,8 @@ class DatePicker {
 
     for (let i = 0; i < 12; i++) {
       let year = curYear - 1 + i;
+
+
       let yearEl = document.createElement('div');
 
       yearEl.classList.add('day');
@@ -240,32 +245,35 @@ class DatePicker {
   }
 
   render() {
-    this.element.innerHTML = `
-    <label><input class="selected-date" placeholder="DD.MM.YYYY" minlength="10" maxlength="10" type="text" pattern="(\\d{2}\\.){2}\\d{4}"></label>
-    
-    <div class="dates">
-        <div class="month-header">
-            <div class="arrows prev">&lt;</div>
-            <div class="mth"></div>
-            <div class="arrows next">&gt;</div>
-        </div>
-        <div class="weekDays"></div>
-        <div class="visible-area days"></div>
-    </div>
-    `;
+    this.calendar = createEl('div', 'dates');
 
-    this.selectedDateElement = this.element.querySelector(`.selected-date`);
-    this.monthElement = this.element.querySelector(`.mth`);
-    this.nextMonthElement = this.element.querySelector(`.next`);
-    this.prevMonthElement = this.element.querySelector(`.prev`);
-    this.daysElement = this.element.querySelector(`.days`);
-    this.weekDays = this.element.querySelector(`.weekDays`);
+    this.selectedDateElement = createEl('input', 'selected-date');
+    this.selectedDateElement.type = 'text';
+    this.selectedDateElement.placeholder = 'DD.MM.YYYY';
+    this.selectedDateElement.maxLength = 11;
 
+    let monthHeader = createEl('div', 'month-header');
+    this.prevMonthElement = createEl('div', 'arrows prev', '<');
+    this.nextMonthElement = createEl('div', 'arrows next', '>');
+    this.monthElement = createEl('div', 'mth');
+
+    monthHeader.append(this.prevMonthElement, this.monthElement, this.nextMonthElement);
+
+    this.weekDays = createEl('div', 'weekDays');
     this.selectedDateElement.value = formatDate(this.selectedDate);
 
     for (let dayName of WEEK_DAY_NAMES) {
-      this.weekDays.innerHTML += `<div>${dayName}</div>`
+      const el = document.createElement('div');
+      el.textContent = dayName;
+      this.weekDays.appendChild(el);
     }
+
+    this.daysElement = createEl('div', 'visible-area days');
+
+    this.calendar.append(monthHeader, this.weekDays, this.daysElement);
+    this.element.append(this.selectedDateElement);
+
+    this.element.addEventListener('focusin', showCalendar.bind(this));
 
     this.selectedDateElement.addEventListener('input', handleChange.bind(this));
     this.nextMonthElement.addEventListener('click', this.goToNextMonth);
@@ -277,13 +285,28 @@ class DatePicker {
 }
 
 //Functions
+function showCalendar() {
+  this.element.appendChild(this.calendar);
+  document.addEventListener('click', (ev) => {
+    if (!ev.composedPath().includes(this.element)) {
+      this.calendar.remove();
+    }
+  })
+}
+
 function handleChange(e) {
   if (this.notManualEditing) {
     e.target.value = formatDate(this.selectedDate);
     return;
   }
   let input = e.target.value;
-  let testRegExr = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+  let cursorPosition = e.target.selectionStart;
+  if (input.length === 11 && cursorPosition < 11) {
+    input = input.slice(0, cursorPosition) + input.slice(cursorPosition+1,);
+    e.target.value = input;
+    e.target.selectionStart = e.target.selectionEnd = cursorPosition;
+  }
+  let testRegExr = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
   let test = input.match(testRegExr);
 
   if (/[^\d.]/g.test(input)) {
@@ -305,6 +328,10 @@ function handleChange(e) {
 }
 
 //Helper Functions
+function normalizeDate(d) {
+
+}
+
 function formatDate(d) {
   let day = d.getDate();
   if (day < 10) {
@@ -329,6 +356,14 @@ function getLocalDay(date) {
   }
 
   return day;
+}
+
+function createEl(elName, classList, text = '') {
+  const el = document.createElement(elName);
+  el.classList = classList;
+  if (text) el.textContent = text;
+
+  return el;
 }
 
 const calendar1 = new DatePicker('date-picker-1');
