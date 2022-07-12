@@ -12,7 +12,9 @@ class DatePicker {
     this.goToNextMonth = this.goToNextMonth.bind(this);
     this.goToPrevMonth = this.goToPrevMonth.bind(this);
     this.goToYear = this.goToYear.bind(this);
-    this.handleElementClick = this.handleElementClick.bind(this);
+    this.handleDayClick = this.handleDayClick.bind(this);
+    this.handleMonthClick = this.handleMonthClick.bind(this);
+    this.handleYearClick = this.handleYearClick.bind(this);
   }
 
   goToNextMonth() {
@@ -61,7 +63,7 @@ class DatePicker {
     this.populateYears();
   }
 
-  handleElementClick(e) {
+  handleDayClick(e) {
     const newDate = e.target.dataset;
     const prev = e.target.classList.contains('prev');
     const next = e.target.classList.contains('next');
@@ -72,6 +74,30 @@ class DatePicker {
     } else {
       this.populateDates(true);
     }
+  }
+
+  handleMonthClick(e) {
+    const month = parseInt(e.target.dataset.month);
+    this.weekDays.style = '';
+    this.daysElement.classList.replace('months', 'days');
+    this.selectedDate.setMonth(month);
+    this.date.setMonth(month);
+    this.selectedDateElement.value = formatDate(this.selectedDate);
+    this.monthElement.addEventListener('click', this.populateMonths);
+    this.nextMonthElement.removeEventListener('click', this.goToYear);
+    this.prevMonthElement.removeEventListener('click', this.goToYear);
+    this.nextMonthElement.addEventListener('click', this.goToNextMonth);
+    this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
+    this.notManualEditing = 0;
+    this.populateDates();
+  }
+
+  handleYearClick(e) {
+    const year = parseInt(e.target.dataset.year);
+    this.date.setFullYear(year);
+    this.selectedDate.setFullYear(year);
+    this.selectedDateElement.value = formatDate(this.selectedDate);
+    this.populateMonths({});
   }
 
   populateDates(curMonth = false) {
@@ -108,7 +134,7 @@ class DatePicker {
       dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
       this.daysElement.appendChild(dayElement);
 
-      dayElement.addEventListener('click', this.handleElementClick);
+      dayElement.addEventListener('click', this.handleDayClick);
     }
 
     for (let i = 0; i < amount_days; i++) {
@@ -124,7 +150,7 @@ class DatePicker {
         dayElement.classList.add('selected');
       }
 
-      dayElement.addEventListener('click', this.handleElementClick);
+      dayElement.addEventListener('click', this.handleDayClick);
 
       this.daysElement.appendChild(dayElement);
     }
@@ -140,7 +166,7 @@ class DatePicker {
       dayElement.dataset.day = dayNumber.toString();
       this.daysElement.appendChild(dayElement);
 
-      dayElement.addEventListener('click', this.handleElementClick);
+      dayElement.addEventListener('click', this.handleDayClick);
     }
   }
 
@@ -170,22 +196,10 @@ class DatePicker {
       }
 
       monthEl.classList.add('day');
+      monthEl.dataset.month = i.toString();
       monthEl.textContent = month;
 
-      monthEl.addEventListener('click', () => {
-        this.weekDays.style = '';
-        this.daysElement.classList.replace('months', 'days');
-        this.selectedDate.setMonth(i);
-        this.date.setMonth(i);
-        this.selectedDateElement.value = formatDate(this.selectedDate);
-        this.monthElement.addEventListener('click', this.populateMonths);
-        this.nextMonthElement.removeEventListener('click', this.goToYear);
-        this.prevMonthElement.removeEventListener('click', this.goToYear);
-        this.nextMonthElement.addEventListener('click', this.goToNextMonth);
-        this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
-        this.notManualEditing = 0;
-        this.populateDates();
-      })
+      monthEl.addEventListener('click', this.handleMonthClick);
 
       this.daysElement.appendChild(monthEl);
     }
@@ -194,17 +208,19 @@ class DatePicker {
   }
 
   populateYears() {
+    const curYear = this.date.getFullYear();
     this.notManualEditing = 10;
-    this.monthElement.textContent = this.date.getFullYear() + ' - ' + (this.date.getFullYear() + 9);
+    this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
     this.daysElement.innerHTML = '';
 
     this.monthElement.removeEventListener('click', this.populateYears);
 
     for (let i = 0; i < 12; i++) {
-      let year = this.date.getFullYear() - 1 + i;
+      let year = curYear - 1 + i;
       let yearEl = document.createElement('div');
 
       yearEl.classList.add('day');
+      yearEl.dataset.year = year.toString();
       yearEl.textContent = year.toString();
 
       if (this.selectedDate.getFullYear() === year) {
@@ -217,12 +233,7 @@ class DatePicker {
         yearEl.classList.add('next');
       }
 
-      yearEl.addEventListener('click', () => {
-        this.date.setFullYear(year);
-        this.selectedDate.setFullYear(year);
-        this.selectedDateElement.value = formatDate(this.selectedDate);
-        this.populateMonths({});
-      });
+      yearEl.addEventListener('click', this.handleYearClick);
 
       this.daysElement.appendChild(yearEl);
     }
