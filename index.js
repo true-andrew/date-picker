@@ -69,7 +69,6 @@ class DatePicker {
     const prev = e.target.classList.contains('prev');
     const next = e.target.classList.contains('next');
     this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
-    console.log(this.selectedDate)
     this.selectedDateElement.value = formatDate(this.selectedDate);
     if (prev || next) {
       prev ? this.goToPrevMonth() : this.goToNextMonth();
@@ -299,17 +298,32 @@ function handleChange(e) {
     e.target.value = formatDate(this.selectedDate);
     return;
   }
+  console.log(e.target.value);
   let input = e.target.value;
   let cursorPosition = e.target.selectionStart;
-  if (input.length === 11 && cursorPosition < 11) {
-    input = input.slice(0, cursorPosition) + input.slice(cursorPosition+1,);
-    e.target.value = input;
-    e.target.selectionStart = e.target.selectionEnd = cursorPosition;
+  let savedChar = Number(input[cursorPosition - 1]);
+
+  if (cursorPosition === 3 || cursorPosition === 6) {
+    if (!isNaN(savedChar)) {
+      cursorPosition += 1;
+      input = input.slice(0, cursorPosition - 2) + '.' + savedChar + input.slice(cursorPosition + 1,)
+    }
+  } else {
+    input = input.slice(0, cursorPosition) + input.slice(cursorPosition + 1,);
   }
+
+  e.target.value = input;
+  e.target.selectionStart = e.target.selectionEnd = cursorPosition;
+
+  if (cursorPosition >= 11) {
+    e.target.value = formatDate(this.selectedDate);
+    return;
+  }
+
   let testRegExr = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
   let test = input.match(testRegExr);
 
-  if (/[^\d.]/g.test(input)) {
+  if (/[^\d.,/]/g.test(input)) {
     e.target.value = formatDate(this.selectedDate);
     return;
   }
@@ -319,6 +333,7 @@ function handleChange(e) {
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
       e.target.value = formatDate(this.selectedDate);
+      e.target.selectionStart = e.target.selectionEnd = cursorPosition - 1;
       return;
     }
     this.selectedDate = new Date(this.date);
