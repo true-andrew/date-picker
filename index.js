@@ -10,34 +10,23 @@ class DatePicker {
     this.notManualEditing = 0;
     this.populateMonths = this.populateMonths.bind(this);
     this.populateYears = this.populateYears.bind(this);
-    this.goToNextMonth = this.goToNextMonth.bind(this);
-    this.goToPrevMonth = this.goToPrevMonth.bind(this);
+    this.goToMonth = this.goToMonth.bind(this);
     this.goToYear = this.goToYear.bind(this);
     this.handleDayClick = this.handleDayClick.bind(this);
     this.handleMonthClick = this.handleMonthClick.bind(this);
     this.handleYearClick = this.handleYearClick.bind(this);
   }
 
-  goToNextMonth() {
-    let month = this.date.getMonth() + 1;
-    let year = this.date.getFullYear();
-    if (month === 12) {
-      month = 0;
-      year++;
-      this.date.setFullYear(year);
-    }
-    this.date.setMonth(month);
-    this.monthElement.textContent = MONTHS[month] + ' ' + year;
-    this.selectedDateElement.value = formatDate(this.selectedDate);
-    this.populateDates();
-  }
-
-  goToPrevMonth() {
-    let month = this.date.getMonth() - 1;
+  goToMonth(value) {
+    let month = this.date.getMonth() + value;
     let year = this.date.getFullYear();
     if (month === -1) {
       month = 11;
       year--;
+      this.date.setFullYear(year);
+    } else if (month === 12) {
+      month = 0;
+      year++;
       this.date.setFullYear(year);
     }
     this.date.setMonth(month);
@@ -65,13 +54,20 @@ class DatePicker {
   }
 
   handleDayClick(e) {
-    const {year, month, day} = e.target.dataset;
     const prev = e.target.classList.contains('prev');
     const next = e.target.classList.contains('next');
-    this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
-    this.selectedDateElement.value = formatDate(this.selectedDate);
+
+    if (e.target.classList.contains('day')) {
+      const {year, month, day} = e.target.dataset;
+      this.selectedDayEl.classList.remove('selected');
+      this.selectedDayEl = e.target;
+      e.target.classList.add('selected');
+      this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
+      this.selectedDateElement.value = formatDate(this.selectedDate);
+    }
+
     if (prev || next) {
-      prev ? this.goToPrevMonth() : this.goToNextMonth();
+      prev ? this.goToMonth(-1) : this.goToMonth(1);
     } else {
       this.populateDates(true);
     }
@@ -87,8 +83,8 @@ class DatePicker {
     this.monthElement.addEventListener('click', this.populateMonths);
     this.nextMonthElement.removeEventListener('click', this.goToYear);
     this.prevMonthElement.removeEventListener('click', this.goToYear);
-    this.nextMonthElement.addEventListener('click', this.goToNextMonth);
-    this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
+    this.nextMonthElement.addEventListener('click', this.handleDayClick);
+    this.prevMonthElement.addEventListener('click', this.handleDayClick);
     this.notManualEditing = 0;
     this.populateDates();
   }
@@ -111,9 +107,6 @@ class DatePicker {
     let selectedYear = this.selectedDate.getFullYear();
 
     if (curMonth) {
-      const lastSelected = this.daysElement.querySelector('.selected');
-      if (lastSelected) lastSelected.classList.remove('selected');
-      this.daysElement.querySelector(`#day${selectedDay}`).classList.add('selected');
       return;
     }
 
@@ -123,20 +116,21 @@ class DatePicker {
     let curMonthEndDayIndex = getLocalDay(new Date(year, month + 1, 0));
     let firstDayNextMonth = 1;
 
-    this.daysElement.innerHTML = '';
+    let newDays = document.createDocumentFragment();
+
     this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
-      const dayElement = document.createElement('div');
 
-      dayElement.classList.add('day', 'prev');
-      dayElement.textContent = String(lastDayMonthBefore - i + 1);
+      const dayElement = createEl('div', 'day prev', String(lastDayMonthBefore - i + 1));
+
       dayElement.dataset.year = year.toString();
       dayElement.dataset.month = (month - 1).toString();
       dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
-      this.daysElement.appendChild(dayElement);
 
       dayElement.addEventListener('click', this.handleDayClick);
+
+      newDays.appendChild(dayElement);
     }
 
     for (let i = 0; i < amount_days; i++) {
@@ -150,11 +144,12 @@ class DatePicker {
 
       if (selectedDay === (i + 1) && selectedYear === year && selectedMonth === month) {
         dayElement.classList.add('selected');
+        this.selectedDayEl = dayElement;
       }
 
       dayElement.addEventListener('click', this.handleDayClick);
 
-      this.daysElement.appendChild(dayElement);
+      newDays.appendChild(dayElement);
     }
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
@@ -166,10 +161,13 @@ class DatePicker {
       dayElement.dataset.year = year.toString();
       dayElement.dataset.month = (month + 1).toString();
       dayElement.dataset.day = dayNumber.toString();
-      this.daysElement.appendChild(dayElement);
 
       dayElement.addEventListener('click', this.handleDayClick);
+
+      newDays.appendChild(dayElement);
     }
+    this.daysElement.textContent = '';
+    this.daysElement.appendChild(newDays);
   }
 
   populateMonths(cur = false) {
@@ -249,7 +247,7 @@ class DatePicker {
     this.selectedDateElement = createEl('input', 'selected-date');
     this.selectedDateElement.type = 'text';
     this.selectedDateElement.placeholder = 'DD.MM.YYYY';
-    this.selectedDateElement.maxLength = 11;
+    this.selectedDateElement.maxLength = 10;
 
     let monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
@@ -274,9 +272,10 @@ class DatePicker {
 
     this.element.addEventListener('focusin', showCalendar.bind(this));
 
-    this.selectedDateElement.addEventListener('input', handleChange.bind(this));
-    this.nextMonthElement.addEventListener('click', this.goToNextMonth);
-    this.prevMonthElement.addEventListener('click', this.goToPrevMonth);
+    this.selectedDateElement.addEventListener('beforeinput', handleChange.bind(this));
+    this.selectedDateElement.addEventListener('paste', e => e.preventDefault());
+    this.nextMonthElement.addEventListener('click', this.handleDayClick);
+    this.prevMonthElement.addEventListener('click', this.handleDayClick);
     this.monthElement.addEventListener('click', this.populateMonths);
 
     this.populateDates();
@@ -289,6 +288,8 @@ function showCalendar() {
   document.addEventListener('click', (ev) => {
     if (!ev.composedPath().includes(this.element)) {
       this.calendar.remove();
+    } else {
+      this.element.appendChild(this.calendar);
     }
   })
 }
@@ -298,26 +299,38 @@ function handleChange(e) {
     e.target.value = formatDate(this.selectedDate);
     return;
   }
-  console.log(e.target.value);
-  let input = e.target.value;
-  let cursorPosition = e.target.selectionStart;
-  let savedChar = Number(input[cursorPosition - 1]);
 
-  if (cursorPosition === 3 || cursorPosition === 6) {
-    if (!isNaN(savedChar)) {
+  function keyboardTyping() {
+    input = input.split('');
+    if (cursorPosition === 2 || cursorPosition === 5) {
+      if (/[.,/-]/.test(savedChar)) {
+        cursorPosition += 1;
+        e.target.selectionStart = e.target.selectionEnd = cursorPosition;
+
+      } else if (/\d/.test(savedChar)) {
+        cursorPosition += 2;
+        input[cursorPosition - 1] = savedChar;
+      }
+    } else {
+      input[cursorPosition] = savedChar;
       cursorPosition += 1;
-      input = input.slice(0, cursorPosition - 2) + '.' + savedChar + input.slice(cursorPosition + 1,)
     }
-  } else {
-    input = input.slice(0, cursorPosition) + input.slice(cursorPosition + 1,);
+
+    input = input.join('');
+
+    e.target.value = input;
+    e.target.selectionStart = e.target.selectionEnd = cursorPosition;
   }
 
-  e.target.value = input;
-  e.target.selectionStart = e.target.selectionEnd = cursorPosition;
+  let input = e.target.value;
+  let cursorPosition = e.target.selectionStart;
+  let savedChar = e.data;
 
-  if (cursorPosition >= 11) {
-    e.target.value = formatDate(this.selectedDate);
-    return;
+  if (cursorPosition === 10) return;
+
+  if (e.target.selectionEnd === e.target.selectionStart) keyboardTyping();
+  else {
+    // input = input.slice(0, e.target.selectionStart) + savedChar + input.slice(e.target.selectionEnd,);
   }
 
   let testRegExr = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;

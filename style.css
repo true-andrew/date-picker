@@ -115,6 +115,10 @@ body {
     background-color: #00CA85;
 }
 
+.today {
+    background-color: #cfecff;;
+}
+
 .prev, .next {
     color: #c5c5c5;
 }
