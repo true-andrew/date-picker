@@ -35,7 +35,7 @@ body {
 }
 
 .date-picker .dates {
-    display: block;
+    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -116,7 +116,7 @@ body {
 }
 
 .today {
-    background-color: #cfecff;;
+    background-color: #cfecff;
 }
 
 .prev, .next {
@@ -125,4 +125,15 @@ body {
 
 .months {
     grid-template-columns: repeat(3, 1fr);
+}
+
+.btn {
+    width: 100%;
+    height: 25px;
+    border: none;
+    cursor: pointer;
+}
+
+.today:hover {
+    background-color: #93d4ff;
 }

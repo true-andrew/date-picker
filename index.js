@@ -8,13 +8,48 @@ class DatePicker {
     this.selectedDate = new Date();
     this.todayDate = new Date();
     this.notManualEditing = 0;
-    this.populateMonths = this.populateMonths.bind(this);
-    this.populateYears = this.populateYears.bind(this);
-    this.goToMonth = this.goToMonth.bind(this);
-    this.goToYear = this.goToYear.bind(this);
-    this.handleDayClick = this.handleDayClick.bind(this);
-    this.handleMonthClick = this.handleMonthClick.bind(this);
-    this.handleYearClick = this.handleYearClick.bind(this);
+  }
+
+  handleEvent(ev) {
+    // console.log(ev.type, ' - ', ev.target)
+    if (ev.type === 'focus') {
+      this.calendar.style.display = 'block';
+    } else if (ev.type === 'blur') {
+      if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) return;
+      this.calendar.style.display = 'none';
+    } else if (ev.type === 'click') {
+      this.selectedDateElement.focus();
+      let target = ev.target;
+      switch (ev.target) {
+        case this.calendar.children[0]:
+          return;
+        case this.monthElement:
+          return;
+        case this.nextMonthElement:
+          this.handleDayClick(target);
+          return;
+        case this.prevMonthElement:
+          this.handleDayClick(target);
+          return;
+        case this.todayBtn:
+          this.setDay(this.todayDate);
+          break;
+        default:
+          this.handleDayClick(target);
+          return;
+      }
+    }
+  }
+
+  setDay(date) {
+    let currentMonth = false;
+    // if (this.date.getFullYear() === date.getFullYear() && this.date.getMonth() === date.getMonth()) {
+    //   currentMonth = true;
+    // }
+    this.date = new Date(date);
+    this.selectedDate = new Date(date);
+    this.selectedDateElement.value = formatDate(this.date)
+    this.populateDates(currentMonth);
   }
 
   goToMonth(value) {
@@ -53,15 +88,15 @@ class DatePicker {
     this.populateYears();
   }
 
-  handleDayClick(e) {
-    const prev = e.target.classList.contains('prev');
-    const next = e.target.classList.contains('next');
+  handleDayClick(el) {
+    const prev = el.classList.contains('prev');
+    const next = el.classList.contains('next');
 
-    if (e.target.classList.contains('day')) {
-      const {year, month, day} = e.target.dataset;
+    if (el.classList.contains('day')) {
+      const {year, month, day} = el.dataset;
       this.selectedDayEl.classList.remove('selected');
-      this.selectedDayEl = e.target;
-      e.target.classList.add('selected');
+      this.selectedDayEl = el;
+      el.classList.add('selected');
       this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
       this.selectedDateElement.value = formatDate(this.selectedDate);
     }
@@ -73,18 +108,14 @@ class DatePicker {
     }
   }
 
-  handleMonthClick(e) {
-    const month = parseInt(e.target.dataset.month);
+  handleMonthClick(target) {
+    debugger
+    const month = parseInt(target.dataset.month);
     this.weekDays.style = '';
     this.daysElement.classList.replace('months', 'days');
     this.selectedDate.setMonth(month);
     this.date.setMonth(month);
     this.selectedDateElement.value = formatDate(this.selectedDate);
-    this.monthElement.addEventListener('click', this.populateMonths);
-    this.nextMonthElement.removeEventListener('click', this.goToYear);
-    this.prevMonthElement.removeEventListener('click', this.goToYear);
-    this.nextMonthElement.addEventListener('click', this.handleDayClick);
-    this.prevMonthElement.addEventListener('click', this.handleDayClick);
     this.notManualEditing = 0;
     this.populateDates();
   }
@@ -99,12 +130,14 @@ class DatePicker {
 
   populateDates(curMonth = false) {
     this.daysElement.classList.replace('months', 'days');
-
     let month = this.date.getMonth();
     let year = this.date.getFullYear();
     let selectedDay = this.selectedDate.getDate();
     let selectedMonth = this.selectedDate.getMonth();
     let selectedYear = this.selectedDate.getFullYear();
+    let todayDay = this.todayDate.getDate();
+    let todayMonth = this.todayDate.getMonth();
+    let todayYear = this.todayDate.getFullYear();
 
     if (curMonth) {
       return;
@@ -128,16 +161,11 @@ class DatePicker {
       dayElement.dataset.month = (month - 1).toString();
       dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
 
-      dayElement.addEventListener('click', this.handleDayClick);
-
       newDays.appendChild(dayElement);
     }
 
     for (let i = 0; i < amount_days; i++) {
-      const dayElement = document.createElement('div');
-      dayElement.classList.add('day');
-      dayElement.textContent = String(i + 1);
-      dayElement.id = 'day' + (i + 1);
+      const dayElement = createEl('div', 'day', String(i + 1));
       dayElement.dataset.year = year.toString();
       dayElement.dataset.month = (month).toString();
       dayElement.dataset.day = (i + 1).toString();
@@ -147,22 +175,19 @@ class DatePicker {
         this.selectedDayEl = dayElement;
       }
 
-      dayElement.addEventListener('click', this.handleDayClick);
+      if (todayDay === (i + 1) && todayMonth === month && todayYear === year) {
+        dayElement.classList.add('today');
+      }
 
       newDays.appendChild(dayElement);
     }
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
-      const dayElement = document.createElement('div');
-      const dayNumber = firstDayNextMonth;
-
-      dayElement.classList.add('day', 'next');
-      dayElement.textContent = String(firstDayNextMonth++);
+      const dayElement = createEl('div', 'day next', String(firstDayNextMonth));
+      const dayNumber = ++firstDayNextMonth;
       dayElement.dataset.year = year.toString();
       dayElement.dataset.month = (month + 1).toString();
       dayElement.dataset.day = dayNumber.toString();
-
-      dayElement.addEventListener('click', this.handleDayClick);
 
       newDays.appendChild(dayElement);
     }
@@ -176,54 +201,43 @@ class DatePicker {
 
     if (typeof cur === 'boolean') return;
 
-    this.monthElement.removeEventListener('click', this.populateMonths);
-    this.monthElement.addEventListener('click', this.populateYears);
-    this.prevMonthElement.removeEventListener('click', this.goToPrevMonth);
-    this.prevMonthElement.addEventListener('click', this.goToYear);
-    this.nextMonthElement.removeEventListener('click', this.goToNextMonth);
-    this.nextMonthElement.addEventListener('click', this.goToYear);
-
     this.weekDays.style = 'display: none;';
-    this.daysElement.innerHTML = '';
+    this.daysElement.textContent = '';
     this.daysElement.classList.replace('days', 'months');
+
+    let monthsContainer = document.createDocumentFragment();
 
     for (let i = 0; i < MONTHS.length; i++) {
       let month = MONTHS[i];
-      let monthEl = document.createElement('div');
+      let monthEl = createEl('div', 'day', month);
 
       if (this.selectedDate.getFullYear() === this.date.getFullYear() && this.selectedDate.getMonth() === i) {
         monthEl.classList.add('selected');
       }
 
-      monthEl.classList.add('day');
       monthEl.dataset.month = i.toString();
-      monthEl.textContent = month;
 
-      monthEl.addEventListener('click', this.handleMonthClick);
-
-      this.daysElement.appendChild(monthEl);
+      monthsContainer.appendChild(monthEl);
     }
 
-
+    this.daysElement.append(monthsContainer);
   }
 
   populateYears() {
     const curYear = this.date.getFullYear();
     this.notManualEditing = 10;
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
-    this.daysElement.innerHTML = '';
+    this.daysElement.textContent = '';
+    this.daysElement.classList.replace('days', 'months');
 
-    this.monthElement.removeEventListener('click', this.populateYears);
+    let yearsContainer = document.createDocumentFragment();
 
     for (let i = 0; i < 12; i++) {
       let year = curYear - 1 + i;
 
+      let yearEl = createEl('div', 'day', String(year));
 
-      let yearEl = document.createElement('div');
-
-      yearEl.classList.add('day');
       yearEl.dataset.year = year.toString();
-      yearEl.textContent = year.toString();
 
       if (this.selectedDate.getFullYear() === year) {
         yearEl.classList.add('selected');
@@ -235,14 +249,19 @@ class DatePicker {
         yearEl.classList.add('next');
       }
 
-      yearEl.addEventListener('click', this.handleYearClick);
-
-      this.daysElement.appendChild(yearEl);
+      yearsContainer.appendChild(yearEl);
     }
+
+    this.daysElement.append(yearsContainer)
+  }
+
+  handleInput() {
+
   }
 
   render() {
-    this.calendar = createEl('div', 'dates');
+    this.calendar = createEl('div', 'dates', '');
+    this.calendar.tabIndex = -1;
 
     this.selectedDateElement = createEl('input', 'selected-date');
     this.selectedDateElement.type = 'text';
@@ -267,34 +286,27 @@ class DatePicker {
 
     this.daysElement = createEl('div', 'visible-area days');
 
-    this.calendar.append(monthHeader, this.weekDays, this.daysElement);
-    this.element.append(this.selectedDateElement);
+    this.todayBtn = createEl('button', 'btn today', 'Сегодня');
 
-    this.element.addEventListener('focusin', showCalendar.bind(this));
 
-    this.selectedDateElement.addEventListener('beforeinput', handleChange.bind(this));
-    this.selectedDateElement.addEventListener('paste', e => e.preventDefault());
-    this.nextMonthElement.addEventListener('click', this.handleDayClick);
-    this.prevMonthElement.addEventListener('click', this.handleDayClick);
-    this.monthElement.addEventListener('click', this.populateMonths);
+    this.calendar.append(monthHeader, this.weekDays, this.daysElement, this.todayBtn);
+
+    this.calendar.addEventListener('click', this);
+    this.selectedDateElement.addEventListener('focus', this);
+    this.selectedDateElement.addEventListener('blur', this);
+
+    this.element.append(this.selectedDateElement, this.calendar);
 
     this.populateDates();
   }
 }
 
 //Functions
-function showCalendar() {
-  this.element.appendChild(this.calendar);
-  document.addEventListener('click', (ev) => {
-    if (!ev.composedPath().includes(this.element)) {
-      this.calendar.remove();
-    } else {
-      this.element.appendChild(this.calendar);
-    }
-  })
-}
-
 function handleChange(e) {
+  if (e.inputType === 'deleteContentForward' || e.inputType === 'deleteContentBackward') {
+    e.target.value = formatDate(this.date);
+    return;
+  }
   if (this.notManualEditing) {
     e.target.value = formatDate(this.selectedDate);
     return;
@@ -328,10 +340,7 @@ function handleChange(e) {
 
   if (cursorPosition === 10) return;
 
-  if (e.target.selectionEnd === e.target.selectionStart) keyboardTyping();
-  else {
-    // input = input.slice(0, e.target.selectionStart) + savedChar + input.slice(e.target.selectionEnd,);
-  }
+  if (e.target.selectionEnd === e.target.selectionStart && savedChar) keyboardTyping();
 
   let testRegExr = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
   let test = input.match(testRegExr);
@@ -396,3 +405,6 @@ function createEl(elName, classList, text = '') {
 
 const calendar1 = new DatePicker('date-picker-1');
 calendar1.render();
+
+// const calendar2 = new DatePicker('date-picker-2');
+// calendar2.render()
