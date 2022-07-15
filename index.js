@@ -38,7 +38,7 @@ class DatePicker {
           this.handleDayClick(target);
           return;
       }
-    } else if (ev.type === 'keypress') {
+    } else if (ev.type === 'beforeinput') {
       this.handleInput(ev);
     }
   }
@@ -258,12 +258,13 @@ class DatePicker {
   }
 
   handleInput(ev) {
+    if (/delete/g.test(ev.inputType)) return;
     ev.preventDefault();
-    if (ev.charCode < 44 || ev.charCode > 57) return;
+    if (ev.data.charCodeAt(0) < 44 || ev.data.charCodeAt(0) > 57) return;
     let cursorPosition = ev.target.selectionStart;
     if (cursorPosition === 10) return;
     let inputFieldValue = ev.target.value;
-    let inputChar = ev.key;
+    let inputChar = ev.data;
     if (inputFieldValue.length < 10) {
       inputFieldValue = formatDate(this.date);
     } else if (cursorPosition === 2 || cursorPosition === 5) {
@@ -323,7 +324,7 @@ class DatePicker {
     this.calendar.addEventListener('click', this);
     this.selectedDateElement.addEventListener('focus', this);
     this.selectedDateElement.addEventListener('blur', this);
-    this.selectedDateElement.addEventListener('keypress', this);
+    this.selectedDateElement.addEventListener('beforeinput', this);
 
     this.element.append(this.selectedDateElement, this.calendar);
 
