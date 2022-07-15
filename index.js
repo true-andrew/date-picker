@@ -332,13 +332,6 @@ class DatePicker {
 }
 
 //Helper Functions
-function normalizeDate(orig, value, position) {
-  debugger;
-  const newArr = orig.split('');
-  newArr[position] = value;
-  return newArr;
-}
-
 function formatDate(d) {
   let day = d.getDate();
   if (day < 10) {
