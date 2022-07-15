@@ -38,6 +38,8 @@ class DatePicker {
           this.handleDayClick(target);
           return;
       }
+    } else if (ev.type === 'keypress') {
+      this.handleInput(ev);
     }
   }
 
@@ -255,9 +257,36 @@ class DatePicker {
     this.daysElement.append(yearsContainer)
   }
 
-  handleInput() {
+  handleInput(ev) {
+    ev.preventDefault();
+    if (ev.charCode < 44 || ev.charCode > 57) return;
+    let cursorPosition = ev.target.selectionStart;
+    if (cursorPosition === 10) return;
+    let inputFieldValue = ev.target.value;
+    let inputChar = ev.key;
+    if (inputFieldValue.length < 10) {
+      inputFieldValue = formatDate(this.date);
+    } else if (cursorPosition === 2 || cursorPosition === 5) {
+      if (/\d/.test(inputChar)) cursorPosition += 1;
+      else inputChar = '.';
+    } else if (/\D/.test(inputChar)) return;
 
+    inputFieldValue = inputFieldValue.slice(0, cursorPosition) + inputChar + inputFieldValue.slice(cursorPosition + 1,);
+
+    const [inpDay, inpMonth, inpYear] = inputFieldValue.split('.');
+    this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
+    if (this.date.toString() === 'Invalid Date') {
+      ev.target.value = formatDate(this.selectedDate);
+      ev.target.selectionStart = ev.target.selectionEnd = cursorPosition - 1;
+      return;
+    }
+    this.selectedDate = new Date(this.date);
+    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
+    ev.target.value = inputFieldValue;
+    ev.target.selectionStart = ev.target.selectionEnd = cursorPosition + 1;
+    this.populateDates();
   }
+
 
   render() {
     this.calendar = createEl('div', 'dates', '');
@@ -294,6 +323,7 @@ class DatePicker {
     this.calendar.addEventListener('click', this);
     this.selectedDateElement.addEventListener('focus', this);
     this.selectedDateElement.addEventListener('blur', this);
+    this.selectedDateElement.addEventListener('keypress', this);
 
     this.element.append(this.selectedDateElement, this.calendar);
 
@@ -301,72 +331,12 @@ class DatePicker {
   }
 }
 
-//Functions
-function handleChange(e) {
-  if (e.inputType === 'deleteContentForward' || e.inputType === 'deleteContentBackward') {
-    e.target.value = formatDate(this.date);
-    return;
-  }
-  if (this.notManualEditing) {
-    e.target.value = formatDate(this.selectedDate);
-    return;
-  }
-
-  function keyboardTyping() {
-    input = input.split('');
-    if (cursorPosition === 2 || cursorPosition === 5) {
-      if (/[.,/-]/.test(savedChar)) {
-        cursorPosition += 1;
-        e.target.selectionStart = e.target.selectionEnd = cursorPosition;
-
-      } else if (/\d/.test(savedChar)) {
-        cursorPosition += 2;
-        input[cursorPosition - 1] = savedChar;
-      }
-    } else {
-      input[cursorPosition] = savedChar;
-      cursorPosition += 1;
-    }
-
-    input = input.join('');
-
-    e.target.value = input;
-    e.target.selectionStart = e.target.selectionEnd = cursorPosition;
-  }
-
-  let input = e.target.value;
-  let cursorPosition = e.target.selectionStart;
-  let savedChar = e.data;
-
-  if (cursorPosition === 10) return;
-
-  if (e.target.selectionEnd === e.target.selectionStart && savedChar) keyboardTyping();
-
-  let testRegExr = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
-  let test = input.match(testRegExr);
-
-  if (/[^\d.,/]/g.test(input)) {
-    e.target.value = formatDate(this.selectedDate);
-    return;
-  }
-
-  if (test) {
-    const [, inpDay, inpMonth, inpYear] = test;
-    this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
-    if (this.date.toString() === 'Invalid Date') {
-      e.target.value = formatDate(this.selectedDate);
-      e.target.selectionStart = e.target.selectionEnd = cursorPosition - 1;
-      return;
-    }
-    this.selectedDate = new Date(this.date);
-    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
-    this.populateDates();
-  }
-}
-
 //Helper Functions
-function normalizeDate(d) {
-
+function normalizeDate(orig, value, position) {
+  debugger;
+  const newArr = orig.split('');
+  newArr[position] = value;
+  return newArr;
 }
 
 function formatDate(d) {
