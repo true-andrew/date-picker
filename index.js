@@ -271,20 +271,24 @@ class DatePicker {
     } else if (cursorPosition === 2 || cursorPosition === 5) {
       if (/\d/.test(inputChar)) cursorPosition += 1;
       else inputChar = '.';
-    } else if (/\D/.test(inputChar)) return;
+    }
 
     inputFieldValue = inputFieldValue.slice(0, cursorPosition) + inputChar + inputFieldValue.slice(cursorPosition + 1,);
 
-    const [inpDay, inpMonth, inpYear] = inputFieldValue.split('.');
+    let [inpDay, inpMonth, inpYear] = inputFieldValue.split('.');
+    if (parseInt(inpDay) > 31) inpDay = '30';
+    else if (parseInt(inpDay) === 0) inpDay = '01';
+    if (parseInt(inpMonth) > 12) inpMonth = '12';
+    else if (parseInt(inpMonth) === 0) inpMonth = '01';
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
       ev.target.value = formatDate(this.selectedDate);
-      ev.target.selectionStart = ev.target.selectionEnd = cursorPosition - 1;
+      ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
       return;
     }
     this.selectedDate = new Date(this.date);
     this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
-    ev.target.value = inputFieldValue;
+    ev.target.value = formatDate(this.date);
     ev.target.selectionStart = ev.target.selectionEnd = cursorPosition + 1;
     this.populateDates();
   }
