@@ -258,11 +258,14 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    this.calendar.append(ev.key);
+    alert("onkeydown handler: \n"
+      + "keyCode property: " + ev.keyCode + "\n"
+      + "which property: " + ev.which + "\n"
+    );
     const skip = ['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
     if(skip.includes(ev.key)) return;
     ev.preventDefault();
-    if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
+    // if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
     let cursorPosition = ev.target.selectionStart;
     if (cursorPosition === 10) return;
     let inputFieldValue = ev.target.value;
