@@ -8,6 +8,7 @@ class DatePicker {
     this.selectedDate = new Date();
     this.todayDate = new Date();
     this.notManualEditing = 0;
+    this.chooseMode = 'days';
   }
 
   handleEvent(ev) {
@@ -16,6 +17,7 @@ class DatePicker {
       this.calendar.style.display = 'block';
     } else if (ev.type === 'blur') {
       if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) return;
+      this.populateDates();
       this.calendar.style.display = 'none';
     } else if (ev.type === 'click') {
       this.selectedDateElement.focus();
@@ -24,18 +26,22 @@ class DatePicker {
         case this.calendar.children[0]:
           return;
         case this.monthElement:
+          if (this.chooseMode === 'days') this.populateMonths();
+          else if (this.chooseMode === 'months') this.populateYears();
           return;
         case this.nextMonthElement:
-          this.handleDayClick(target);
-          return;
         case this.prevMonthElement:
-          this.handleDayClick(target);
+          if (this.chooseMode === 'days') this.handleDayClick(target)
+          else this.goToYear(target);
           return;
         case this.todayBtn:
           this.setDay(this.todayDate);
           break;
         default:
-          this.handleDayClick(target);
+          if (target === this.daysElement) return;
+          if (this.chooseMode === 'days') this.handleDayClick(target)
+          else if (this.chooseMode === 'months') this.handleMonthClick(target);
+          else this.handleYearClick(target);
           return;
       }
     } else if (ev.type === 'keydown') {
@@ -72,9 +78,9 @@ class DatePicker {
     this.populateDates();
   }
 
-  goToYear(e) {
+  goToYear(el) {
     let year = this.date.getFullYear();
-    if (e.target.classList.contains('next')) {
+    if (el.classList.contains('next')) {
       year += this.notManualEditing;
     } else {
       year -= this.notManualEditing;
@@ -111,7 +117,6 @@ class DatePicker {
   }
 
   handleMonthClick(target) {
-    debugger
     const month = parseInt(target.dataset.month);
     this.weekDays.style = '';
     this.daysElement.classList.replace('months', 'days');
@@ -122,16 +127,17 @@ class DatePicker {
     this.populateDates();
   }
 
-  handleYearClick(e) {
-    const year = parseInt(e.target.dataset.year);
+  handleYearClick(el) {
+    const year = parseInt(el.dataset.year);
     this.date.setFullYear(year);
     this.selectedDate.setFullYear(year);
     this.selectedDateElement.value = formatDate(this.selectedDate);
-    this.populateMonths({});
+    this.populateMonths();
   }
 
   populateDates(curMonth = false) {
     this.daysElement.classList.replace('months', 'days');
+    this.chooseMode = 'days';
     let month = this.date.getMonth();
     let year = this.date.getFullYear();
     let selectedDay = this.selectedDate.getDate();
@@ -153,7 +159,8 @@ class DatePicker {
 
     let newDays = document.createDocumentFragment();
 
-    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
+    this.monthElement.textContent = MONTHS[month] + ' ' + year;
+    this.monthElement.dataset.type = 'days';
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
 
@@ -198,10 +205,11 @@ class DatePicker {
   }
 
   populateMonths(cur = false) {
+    this.chooseMode = 'months';
     this.notManualEditing = 1;
     this.monthElement.textContent = this.selectedDate.getFullYear().toString();
 
-    if (typeof cur === 'boolean') return;
+    if (cur) return;
 
     this.weekDays.style = 'display: none;';
     this.daysElement.textContent = '';
@@ -226,6 +234,7 @@ class DatePicker {
   }
 
   populateYears() {
+    this.chooseMode = 'years';
     const curYear = this.date.getFullYear();
     this.notManualEditing = 10;
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
@@ -258,14 +267,10 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    alert("onkeydown handler: \n"
-      + "keyCode property: " + ev.keyCode + "\n"
-      + "which property: " + ev.which + "\n"
-    );
     const skip = ['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
     if(skip.includes(ev.key)) return;
     ev.preventDefault();
-    // if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
+    if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
     let cursorPosition = ev.target.selectionStart;
     if (cursorPosition === 10) return;
     let inputFieldValue = ev.target.value;
