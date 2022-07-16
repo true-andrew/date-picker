@@ -258,6 +258,7 @@ class DatePicker {
   }
 
   handleInput(ev) {
+    alert(ev.key);
     const skip = ['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
     if(skip.includes(ev.key)) return;
     ev.preventDefault();
