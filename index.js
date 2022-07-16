@@ -38,7 +38,7 @@ class DatePicker {
           this.handleDayClick(target);
           return;
       }
-    } else if (ev.type === 'beforeinput') {
+    } else if (ev.type === 'keydown') {
       this.handleInput(ev);
     }
   }
@@ -209,7 +209,7 @@ class DatePicker {
 
     let monthsContainer = document.createDocumentFragment();
 
-    for (let i = 0; i < MONTHS.length; i++) {
+    for (let i = 0; i < 12; i++) {
       let month = MONTHS[i];
       let monthEl = createEl('div', 'day', month);
 
@@ -258,13 +258,14 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    if (/delete/g.test(ev.inputType)) return;
+    const skip = ['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
+    if(skip.includes(ev.key)) return;
     ev.preventDefault();
-    if (ev.data.charCodeAt(0) < 44 || ev.data.charCodeAt(0) > 57) return;
+    if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
     let cursorPosition = ev.target.selectionStart;
     if (cursorPosition === 10) return;
     let inputFieldValue = ev.target.value;
-    let inputChar = ev.data;
+    let inputChar = ev.key;
     if (inputFieldValue.length < 10) {
       inputFieldValue = formatDate(this.date);
     } else if (cursorPosition === 2 || cursorPosition === 5) {
@@ -324,7 +325,7 @@ class DatePicker {
     this.calendar.addEventListener('click', this);
     this.selectedDateElement.addEventListener('focus', this);
     this.selectedDateElement.addEventListener('blur', this);
-    this.selectedDateElement.addEventListener('beforeinput', this);
+    this.selectedDateElement.addEventListener('keydown', this);
 
     this.element.append(this.selectedDateElement, this.calendar);
 
