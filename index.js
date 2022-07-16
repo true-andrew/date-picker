@@ -44,7 +44,7 @@ class DatePicker {
           else this.handleYearClick(target);
           return;
       }
-    } else if (ev.type === 'keydown') {
+    } else if (ev.type === 'beforeinput') {
       this.handleInput(ev);
     }
   }
@@ -90,7 +90,7 @@ class DatePicker {
     this.selectedDateElement.value = formatDate(this.selectedDate);
 
     if (this.notManualEditing === 1) {
-      this.populateMonths();
+      this.populateMonths(true);
       return;
     }
     this.populateYears();
@@ -160,7 +160,6 @@ class DatePicker {
     let newDays = document.createDocumentFragment();
 
     this.monthElement.textContent = MONTHS[month] + ' ' + year;
-    this.monthElement.dataset.type = 'days';
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
 
@@ -267,14 +266,15 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    const skip = ['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
-    if(skip.includes(ev.key)) return;
+    if (/delete/g.test(ev.inputType)) return;
     ev.preventDefault();
-    if (ev.key.charCodeAt(0) < 44 || ev.key.charCodeAt(0) > 57) return;
+    if (ev.data.charCodeAt(0) < 44 || ev.data.charCodeAt(0) > 57) {
+      return;
+    }
     let cursorPosition = ev.target.selectionStart;
     if (cursorPosition === 10) return;
     let inputFieldValue = ev.target.value;
-    let inputChar = ev.key;
+    let inputChar = ev.data;
     if (inputFieldValue.length < 10) {
       inputFieldValue = formatDate(this.date);
     } else if (cursorPosition === 2 || cursorPosition === 5) {
@@ -289,6 +289,7 @@ class DatePicker {
     else if (parseInt(inpDay) === 0) inpDay = '01';
     if (parseInt(inpMonth) > 12) inpMonth = '12';
     else if (parseInt(inpMonth) === 0) inpMonth = '01';
+    if(parseInt(inpYear) < 1000) inpYear = '1000';
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
       ev.target.value = formatDate(this.selectedDate);
@@ -310,7 +311,7 @@ class DatePicker {
     this.selectedDateElement = createEl('input', 'selected-date');
     this.selectedDateElement.type = 'text';
     this.selectedDateElement.placeholder = 'DD.MM.YYYY';
-    this.selectedDateElement.maxLength = 10;
+    this.selectedDateElement.maxLength = 11;
 
     let monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
@@ -338,7 +339,11 @@ class DatePicker {
     this.calendar.addEventListener('click', this);
     this.selectedDateElement.addEventListener('focus', this);
     this.selectedDateElement.addEventListener('blur', this);
-    this.selectedDateElement.addEventListener('keydown', this);
+    this.selectedDateElement.addEventListener('beforeinput', this);
+    // this.selectedDateElement.addEventListener('compositionstart', (ev) => {
+    //   debugger;
+    //   ev.preventDefault();
+    // });
 
     this.element.append(this.selectedDateElement, this.calendar);
 
