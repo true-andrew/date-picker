@@ -44,7 +44,7 @@ class DatePicker {
           else this.handleYearClick(target);
           return;
       }
-    } else if (ev.type === 'beforeinput') {
+    } else if (ev.type === 'input') {
       this.handleInput(ev);
     }
   }
@@ -267,29 +267,42 @@ class DatePicker {
 
   handleInput(ev) {
     if (/delete/g.test(ev.inputType)) return;
-    ev.preventDefault();
-    if (ev.data.charCodeAt(0) < 44 || ev.data.charCodeAt(0) > 57) {
-      return;
-    }
-    let cursorPosition = ev.target.selectionStart;
-    if (cursorPosition === 10) return;
-    let inputFieldValue = ev.target.value;
+
+    debugger
+
+    let cursorPosition = ev.target.selectionStart - 1;
+    let inputFieldValue = ev.target.value.split('');
     let inputChar = ev.data;
-    if (inputFieldValue.length < 10) {
-      inputFieldValue = formatDate(this.date);
-    } else if (cursorPosition === 2 || cursorPosition === 5) {
-      if (/\d/.test(inputChar)) cursorPosition += 1;
-      else inputChar = '.';
+
+    if (inputFieldValue.length <= 10) {
+      inputFieldValue = formatDate(this.date).split('');
+    } else {
+      inputFieldValue.splice(cursorPosition, 1);
     }
 
-    inputFieldValue = inputFieldValue.slice(0, cursorPosition) + inputChar + inputFieldValue.slice(cursorPosition + 1,);
+    if (cursorPosition === 10) {
+      ev.target.value = inputFieldValue.slice(0, 10).join('');
+      return;
+    }
+
+    if (cursorPosition === 2 || cursorPosition === 5) {
+      if (/\d/.test(inputChar)) cursorPosition += 1;
+      else inputChar = '.';
+    } else if (/\D/.test(inputChar)) {
+      ev.target.value = formatDate(this.selectedDate);
+      ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
+      return;
+    }
+
+    inputFieldValue[cursorPosition] = inputChar;
+    inputFieldValue = inputFieldValue.join('');
 
     let [inpDay, inpMonth, inpYear] = inputFieldValue.split('.');
     if (parseInt(inpDay) > 31) inpDay = '30';
     else if (parseInt(inpDay) === 0) inpDay = '01';
     if (parseInt(inpMonth) > 12) inpMonth = '12';
     else if (parseInt(inpMonth) === 0) inpMonth = '01';
-    if(parseInt(inpYear) < 1000) inpYear = '1000';
+    if (parseInt(inpYear) < 1000) inpYear = '1000';
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
       ev.target.value = formatDate(this.selectedDate);
@@ -339,11 +352,7 @@ class DatePicker {
     this.calendar.addEventListener('click', this);
     this.selectedDateElement.addEventListener('focus', this);
     this.selectedDateElement.addEventListener('blur', this);
-    this.selectedDateElement.addEventListener('beforeinput', this);
-    // this.selectedDateElement.addEventListener('compositionstart', (ev) => {
-    //   debugger;
-    //   ev.preventDefault();
-    // });
+    this.selectedDateElement.addEventListener('input', this);
 
     this.element.append(this.selectedDateElement, this.calendar);
 
