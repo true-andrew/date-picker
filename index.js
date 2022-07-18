@@ -56,7 +56,7 @@ class DatePicker {
     // }
     this.date = new Date(date);
     this.selectedDate = new Date(date);
-    this.selectedDateElement.value = formatDate(this.date)
+    this.selectedDateElement.value = formatDate(this.date);
     this.populateDates(currentMonth);
   }
 
@@ -73,7 +73,6 @@ class DatePicker {
       this.date.setFullYear(year);
     }
     this.date.setMonth(month);
-    this.monthElement.textContent = MONTHS[month] + ' ' + year;
     this.selectedDateElement.value = formatDate(this.selectedDate);
     this.populateDates();
   }
@@ -169,7 +168,7 @@ class DatePicker {
       dayElement.dataset.month = (month - 1).toString();
       dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
 
-      newDays.appendChild(dayElement);
+      newDays.append(dayElement);
     }
 
     for (let i = 0; i < amount_days; i++) {
@@ -187,7 +186,7 @@ class DatePicker {
         dayElement.classList.add('today');
       }
 
-      newDays.appendChild(dayElement);
+      newDays.append(dayElement);
     }
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
@@ -197,10 +196,9 @@ class DatePicker {
       dayElement.dataset.month = (month + 1).toString();
       dayElement.dataset.day = dayNumber.toString();
 
-      newDays.appendChild(dayElement);
+      newDays.append(dayElement);
     }
-    this.daysElement.textContent = '';
-    this.daysElement.appendChild(newDays);
+    this.daysElement.replaceChildren(newDays);
   }
 
   populateMonths(cur = false) {
@@ -211,7 +209,6 @@ class DatePicker {
     if (cur) return;
 
     this.weekDays.style = 'display: none;';
-    this.daysElement.textContent = '';
     this.daysElement.classList.replace('days', 'months');
 
     let monthsContainer = document.createDocumentFragment();
@@ -226,10 +223,10 @@ class DatePicker {
 
       monthEl.dataset.month = i.toString();
 
-      monthsContainer.appendChild(monthEl);
+      monthsContainer.append(monthEl);
     }
 
-    this.daysElement.append(monthsContainer);
+    this.daysElement.replaceChildren(monthsContainer);
   }
 
   populateYears() {
@@ -237,7 +234,6 @@ class DatePicker {
     const curYear = this.date.getFullYear();
     this.notManualEditing = 10;
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
-    this.daysElement.textContent = '';
     this.daysElement.classList.replace('days', 'months');
 
     let yearsContainer = document.createDocumentFragment();
@@ -259,24 +255,23 @@ class DatePicker {
         yearEl.classList.add('next');
       }
 
-      yearsContainer.appendChild(yearEl);
+      yearsContainer.append(yearEl);
     }
 
-    this.daysElement.append(yearsContainer)
+    this.daysElement.replaceChildren(yearsContainer);
   }
 
   handleInput(ev) {
     if (/delete/g.test(ev.inputType)) return;
 
-    debugger
-
     let cursorPosition = ev.target.selectionStart - 1;
-    let inputFieldValue = ev.target.value.split('');
+    let inputFieldValue = ev.target.value;
     let inputChar = ev.data;
 
     if (inputFieldValue.length <= 10) {
-      inputFieldValue = formatDate(this.date).split('');
+      inputFieldValue = formatDate(this.selectedDate).split('');
     } else {
+      inputFieldValue = inputFieldValue.split('');
       inputFieldValue.splice(cursorPosition, 1);
     }
 
@@ -295,14 +290,17 @@ class DatePicker {
     }
 
     inputFieldValue[cursorPosition] = inputChar;
-    inputFieldValue = inputFieldValue.join('');
 
-    let [inpDay, inpMonth, inpYear] = inputFieldValue.split('.');
+    let inpDay = inputFieldValue[0] + inputFieldValue[1];
+    let inpMonth = inputFieldValue[3] + inputFieldValue[4];
+    let inpYear = inputFieldValue[6] + inputFieldValue[7] + inputFieldValue[8] + inputFieldValue[9];
+
     if (parseInt(inpDay) > 31) inpDay = '30';
     else if (parseInt(inpDay) === 0) inpDay = '01';
     if (parseInt(inpMonth) > 12) inpMonth = '12';
     else if (parseInt(inpMonth) === 0) inpMonth = '01';
     if (parseInt(inpYear) < 1000) inpYear = '1000';
+
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
       ev.target.value = formatDate(this.selectedDate);
@@ -310,7 +308,6 @@ class DatePicker {
       return;
     }
     this.selectedDate = new Date(this.date);
-    this.monthElement.textContent = MONTHS[this.date.getMonth()] + ' ' + this.date.getFullYear();
     ev.target.value = formatDate(this.date);
     ev.target.selectionStart = ev.target.selectionEnd = cursorPosition + 1;
     this.populateDates();
@@ -339,7 +336,7 @@ class DatePicker {
     for (let dayName of WEEK_DAY_NAMES) {
       const el = document.createElement('div');
       el.textContent = dayName;
-      this.weekDays.appendChild(el);
+      this.weekDays.append(el);
     }
 
     this.daysElement = createEl('div', 'visible-area days');
