@@ -7,7 +7,7 @@ class DatePicker {
     this.date = new Date();
     this.selectedDate = new Date();
     this.todayDate = new Date();
-    this.notManualEditing = 0;
+    this.yearStep = 0;
     this.chooseMode = 'days';
   }
 
@@ -35,8 +35,8 @@ class DatePicker {
           else this.goToYear(target);
           return;
         case this.todayBtn:
-          this.setDay(this.todayDate);
-          break;
+          this.setToday(this.todayDate);
+          return;
         default:
           if (target === this.daysElement) return;
           if (this.chooseMode === 'days') this.handleDayClick(target)
@@ -49,15 +49,11 @@ class DatePicker {
     }
   }
 
-  setDay(date) {
-    let currentMonth = false;
-    // if (this.date.getFullYear() === date.getFullYear() && this.date.getMonth() === date.getMonth()) {
-    //   currentMonth = true;
-    // }
+  setToday(date) {
     this.date = new Date(date);
     this.selectedDate = new Date(date);
     this.selectedDateElement.value = formatDate(this.date);
-    this.populateDates(currentMonth);
+    this.populateDates();
   }
 
   goToMonth(value) {
@@ -80,15 +76,15 @@ class DatePicker {
   goToYear(el) {
     let year = this.date.getFullYear();
     if (el.classList.contains('next')) {
-      year += this.notManualEditing;
+      year += this.yearStep;
     } else {
-      year -= this.notManualEditing;
+      year -= this.yearStep;
     }
     this.date.setFullYear(year);
     this.selectedDate.setFullYear(year);
     this.selectedDateElement.value = formatDate(this.selectedDate);
 
-    if (this.notManualEditing === 1) {
+    if (this.yearStep === 1) {
       this.populateMonths(true);
       return;
     }
@@ -122,7 +118,7 @@ class DatePicker {
     this.selectedDate.setMonth(month);
     this.date.setMonth(month);
     this.selectedDateElement.value = formatDate(this.selectedDate);
-    this.notManualEditing = 0;
+    this.yearStep = 0;
     this.populateDates();
   }
 
@@ -191,7 +187,7 @@ class DatePicker {
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
       const dayElement = createEl('div', 'day next', String(firstDayNextMonth));
-      const dayNumber = ++firstDayNextMonth;
+      const dayNumber = firstDayNextMonth++;
       dayElement.dataset.year = year.toString();
       dayElement.dataset.month = (month + 1).toString();
       dayElement.dataset.day = dayNumber.toString();
@@ -203,7 +199,7 @@ class DatePicker {
 
   populateMonths(cur = false) {
     this.chooseMode = 'months';
-    this.notManualEditing = 1;
+    this.yearStep = 1;
     this.monthElement.textContent = this.selectedDate.getFullYear().toString();
 
     if (cur) return;
@@ -232,7 +228,7 @@ class DatePicker {
   populateYears() {
     this.chooseMode = 'years';
     const curYear = this.date.getFullYear();
-    this.notManualEditing = 10;
+    this.yearStep = 10;
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
     this.daysElement.classList.replace('days', 'months');
 
