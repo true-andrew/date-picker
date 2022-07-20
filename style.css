@@ -34,7 +34,7 @@ body {
     background-color: #F3F3F3;
 }
 
-.date-picker .dates {
+.date-picker .calendar {
     display: none;
     position: absolute;
     top: 100%;
@@ -44,7 +44,7 @@ body {
     background-color: #FFF;
 }
 
-.date-picker .dates .month-header {
+.date-picker .calendar .month-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -60,7 +60,7 @@ body {
     background-color: #F3F3F3;
 }
 
-.date-picker .dates .month-header .arrows {
+.date-picker .calendar .month-header .arrows {
     width: 35px;
     height: 35px;
     display: flex;
@@ -70,11 +70,11 @@ body {
     font-size: 20px;
 }
 
-.date-picker .dates .month-header .arrows:hover {
+.date-picker .calendar .month-header .arrows:hover {
     background-color: #F3F3F3;
 }
 
-.date-picker .dates .month-header .arrows:active {
+.date-picker .calendar .month-header .arrows:active {
     background-color: #00CA85;
 }
 

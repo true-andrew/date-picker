@@ -1,28 +1,45 @@
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const WEEK_DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
+
 class DatePicker {
+  container = undefined;
+  date = undefined;
+  selectedDate = undefined;
+  yearStep = 0;
+  chooseMode = 'days';
+  calendar = undefined;
+  inputElement = undefined;
+  prevMonthElement = undefined;
+  nextMonthElement = undefined;
+  monthElement = undefined;
+  weekDays = undefined;
+  daysElement = undefined;
+  todayBtn = undefined;
+  selectedDayEl = undefined;
+  regExDelete = /delete/g;
+  regExIsNumber = /\d/;
+  regExIsNotNumber = /\D/;
+
   constructor(id) {
     this.container = document.getElementById(id);
     this.date = new Date();
     this.selectedDate = new Date();
-    this.yearStep = 0;
-    this.chooseMode = 'days';
   }
 
   handleEvent(ev) {
     // console.log(ev.type, ' - ', ev.target)
     if (ev.type === 'focus') {
-      this.dates.style.display = 'block';
+      this.calendar.style.display = 'block';
     } else if (ev.type === 'blur') {
-      if ((ev.relatedTarget === this.dates) || (ev.relatedTarget === this.todayBtn)) return;
+      if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) return;
       if (this.chooseMode !== 'days') this.populateDates();
-      this.dates.style.display = 'none';
+      this.calendar.style.display = 'none';
     } else if (ev.type === 'click') {
       this.inputElement.focus();
       let target = ev.target;
       switch (target) {
-        case this.dates.children[0]:
+        case this.calendar.children[0]:
           return;
         case this.monthElement:
           if (this.chooseMode === 'days') this.populateMonths();
@@ -210,7 +227,9 @@ class DatePicker {
   populateMonths(cur = false) {
     this.monthElement.textContent = this.selectedDate.getFullYear().toString();
 
-    if (cur) return;
+    if (cur) {
+      return;
+    }
 
     this.chooseMode = 'months';
     this.yearStep = 1;
@@ -268,7 +287,7 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    if (/delete/g.test(ev.inputType)) return;
+    if (this.regExDelete.test(ev.inputType)) return;
 
     let cursorPosition = ev.target.selectionStart - 1;
     let inputFieldValue = ev.target.value;
@@ -287,9 +306,9 @@ class DatePicker {
     }
 
     if (cursorPosition === 2 || cursorPosition === 5) {
-      if (/\d/.test(inputChar)) cursorPosition += 1;
+      if (this.regExIsNumber.test(inputChar)) cursorPosition += 1;
       else inputChar = '.';
-    } else if (/\D/.test(inputChar)) {
+    } else if (this.regExIsNotNumber.test(inputChar)) {
       ev.target.value = formatDate(this.selectedDate);
       ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
       return;
@@ -321,7 +340,7 @@ class DatePicker {
 
 
   render() {
-    this.dates = createEl('div', 'dates', '', {tabIndex: -1});
+    this.calendar = createEl('div', 'calendar', '', {tabIndex: -1});
 
     this.inputElement = createEl('input', 'selected-date', '', {
       type: 'text',
@@ -348,18 +367,19 @@ class DatePicker {
 
     this.todayBtn = createEl('button', 'btn today', 'Сегодня');
 
-    this.dates.append(monthHeader, this.weekDays, this.daysElement, this.todayBtn);
+    this.calendar.append(monthHeader, this.weekDays, this.daysElement, this.todayBtn);
 
-    this.dates.addEventListener('click', this);
+    this.calendar.addEventListener('click', this);
     this.inputElement.addEventListener('focus', this);
     this.inputElement.addEventListener('blur', this);
     this.inputElement.addEventListener('input', this);
 
-    this.container.append(this.inputElement, this.dates);
+    this.container.append(this.inputElement, this.calendar);
 
     this.populateDates();
   }
 }
+
 
 //Helper Functions
 function formatDate(d) {
