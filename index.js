@@ -3,11 +3,8 @@ const WEEK_DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 
 class DatePicker {
+  //elements
   container = undefined;
-  date = undefined;
-  selectedDate = undefined;
-  yearStep = 0;
-  chooseMode = 'days';
   calendar = undefined;
   inputElement = undefined;
   prevMonthElement = undefined;
@@ -18,6 +15,12 @@ class DatePicker {
   todayBtn = undefined;
   selectedDayEl = undefined;
   todayDayEl = undefined;
+  //data
+  date = undefined;
+  selectedDate = undefined;
+  yearStep = 0;
+  chooseMode = 'days';
+  //regexp
   regExDelete = /delete/;
   regExIsNumber = /\d/;
   regExIsNotNumber = /\D/;
