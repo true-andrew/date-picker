@@ -29,7 +29,6 @@ class DatePicker {
   }
 
   handleEvent(ev) {
-    // console.log(ev.type, ' - ', ev.target)
     if (ev.type === 'focus') {
       this.calendar.style.display = 'block';
     } else if (ev.type === 'blur') {
@@ -42,47 +41,50 @@ class DatePicker {
       this.calendar.style.display = 'none';
     } else if (ev.type === 'click') {
       this.inputElement.focus();
-      const target = ev.target;
-      switch (target) {
-        case this.calendar.children[0]:
-          return;
-        case this.monthElement:
-          if (this.chooseMode === 'days') {
-            this.populateMonths();
-          }
-          else if (this.chooseMode === 'months') {
-            this.populateYears();
-          }
-          return;
-        case this.nextMonthElement:
-        case this.prevMonthElement:
-          if (this.chooseMode === 'days') {
-            this.handleDayClick(target);
-          }
-          else {
-            this.goToYear(target);
-          }
-          return;
-        case this.todayBtn:
-          this.setToday();
-          return;
-        default:
-          if (target === this.daysElement) {
-            return;
-          }
-          if (this.chooseMode === 'days') {
-            this.handleDayClick(target);
-          }
-          else if (this.chooseMode === 'months') {
-            this.handleMonthClick(target);
-          }
-          else {
-            this.handleYearClick(target);
-          }
-          return;
-      }
+      this.handleClickEvent(ev.target);
     } else if (ev.type === 'input') {
       this.handleInput(ev);
+    }
+  }
+
+  handleClickEvent(target) {
+    switch (target) {
+      case this.calendar.children[0]:
+        return;
+      case this.monthElement:
+        if (this.chooseMode === 'days') {
+          this.populateMonths();
+        }
+        else if (this.chooseMode === 'months') {
+          this.populateYears();
+        }
+        return;
+      case this.nextMonthElement:
+      case this.prevMonthElement:
+        if (this.chooseMode === 'days') {
+          this.chooseDay(target);
+        }
+        else {
+          this.goToYear(target);
+        }
+        return;
+      case this.todayBtn:
+        this.setToday();
+        return;
+      default:
+        if (target === this.daysElement) {
+          return;
+        }
+        if (this.chooseMode === 'days') {
+          this.chooseDay(target);
+        }
+        else if (this.chooseMode === 'months') {
+          this.chooseMonth(target);
+        }
+        else {
+          this.chooseYear(target);
+        }
+        return;
     }
   }
 
@@ -135,7 +137,7 @@ class DatePicker {
     this.populateYears();
   }
 
-  handleDayClick(el) {
+  chooseDay(el) {
     const prev = el.classList.contains('prev');
     const next = el.classList.contains('next');
 
@@ -155,7 +157,7 @@ class DatePicker {
     }
   }
 
-  handleMonthClick(target) {
+  chooseMonth(target) {
     const month = parseInt(target.dataset.month);
     this.weekDays.style = '';
     this.daysElement.classList.replace('months', 'days');
@@ -166,7 +168,7 @@ class DatePicker {
     this.populateDates();
   }
 
-  handleYearClick(el) {
+  chooseYear(el) {
     const year = parseInt(el.dataset.year);
     this.date.setFullYear(year);
     this.selectedDate.setFullYear(year);
