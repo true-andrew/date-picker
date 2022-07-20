@@ -17,7 +17,8 @@ class DatePicker {
   daysElement = undefined;
   todayBtn = undefined;
   selectedDayEl = undefined;
-  regExDelete = /delete/g;
+  todayDayEl = undefined;
+  regExDelete = /delete/;
   regExIsNumber = /\d/;
   regExIsNotNumber = /\D/;
 
@@ -32,32 +33,52 @@ class DatePicker {
     if (ev.type === 'focus') {
       this.calendar.style.display = 'block';
     } else if (ev.type === 'blur') {
-      if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) return;
-      if (this.chooseMode !== 'days') this.populateDates();
+      if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) {
+        return;
+      }
+      if (this.chooseMode !== 'days') {
+        this.populateDates();
+      }
       this.calendar.style.display = 'none';
     } else if (ev.type === 'click') {
       this.inputElement.focus();
-      let target = ev.target;
+      const target = ev.target;
       switch (target) {
         case this.calendar.children[0]:
           return;
         case this.monthElement:
-          if (this.chooseMode === 'days') this.populateMonths();
-          else if (this.chooseMode === 'months') this.populateYears();
+          if (this.chooseMode === 'days') {
+            this.populateMonths();
+          }
+          else if (this.chooseMode === 'months') {
+            this.populateYears();
+          }
           return;
         case this.nextMonthElement:
         case this.prevMonthElement:
-          if (this.chooseMode === 'days') this.handleDayClick(target)
-          else this.goToYear(target);
+          if (this.chooseMode === 'days') {
+            this.handleDayClick(target);
+          }
+          else {
+            this.goToYear(target);
+          }
           return;
         case this.todayBtn:
           this.setToday();
           return;
         default:
-          if (target === this.daysElement) return;
-          if (this.chooseMode === 'days') this.handleDayClick(target)
-          else if (this.chooseMode === 'months') this.handleMonthClick(target);
-          else this.handleYearClick(target);
+          if (target === this.daysElement) {
+            return;
+          }
+          if (this.chooseMode === 'days') {
+            this.handleDayClick(target);
+          }
+          else if (this.chooseMode === 'months') {
+            this.handleMonthClick(target);
+          }
+          else {
+            this.handleYearClick(target);
+          }
           return;
       }
     } else if (ev.type === 'input') {
@@ -161,24 +182,24 @@ class DatePicker {
     }
 
     this.chooseMode = 'days';
-    let month = this.date.getMonth();
-    let year = this.date.getFullYear();
-    let selectedDay = this.selectedDate.getDate();
-    let selectedMonth = this.selectedDate.getMonth();
-    let selectedYear = this.selectedDate.getFullYear();
+    const month = this.date.getMonth();
+    const year = this.date.getFullYear();
+    const selectedDay = this.selectedDate.getDate();
+    const selectedMonth = this.selectedDate.getMonth();
+    const selectedYear = this.selectedDate.getFullYear();
 
     const today = new Date();
-    let todayDay = today.getDate();
-    let todayMonth = today.getMonth();
-    let todayYear = today.getFullYear();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
 
-    let amount_days = new Date(year, month + 1, 0).getDate();
-    let curMonthFirstDayIndex = getLocalDay(new Date(year, month, 1));
-    let lastDayMonthBefore = new Date(year, month, 0).getDate();
-    let curMonthEndDayIndex = getLocalDay(new Date(year, month + 1, 0));
+    const amount_days = new Date(year, month + 1, 0).getDate();
+    const curMonthFirstDayIndex = getLocalDay(new Date(year, month, 1));
+    const lastDayMonthBefore = new Date(year, month, 0).getDate();
+    const curMonthEndDayIndex = getLocalDay(new Date(year, month + 1, 0));
     let firstDayNextMonth = 1;
 
-    let daysContainer = document.createDocumentFragment();
+    const daysContainer = document.createDocumentFragment();
 
     this.monthElement.textContent = MONTHS[month] + ' ' + year;
 
@@ -236,11 +257,11 @@ class DatePicker {
     this.weekDays.style = 'display: none;';
     this.daysElement.classList.replace('days', 'months');
 
-    let monthsContainer = document.createDocumentFragment();
+    const monthsContainer = document.createDocumentFragment();
 
     for (let i = 0; i < 12; i++) {
-      let month = MONTHS[i];
-      let monthEl = createEl('div', 'day', month);
+      const month = MONTHS[i];
+      const monthEl = createEl('div', 'day', month);
 
       if (this.selectedDate.getFullYear() === this.date.getFullYear() && this.selectedDate.getMonth() === i) {
         monthEl.classList.add('selected');
@@ -261,12 +282,12 @@ class DatePicker {
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
     this.daysElement.classList.replace('days', 'months');
 
-    let yearsContainer = document.createDocumentFragment();
+    const yearsContainer = document.createDocumentFragment();
 
     for (let i = 0; i < 12; i++) {
-      let year = curYear - 1 + i;
+      const year = curYear - 1 + i;
 
-      let yearEl = createEl('div', 'day', String(year));
+      const yearEl = createEl('div', 'day', String(year));
 
       yearEl.dataset.year = year.toString();
 
@@ -287,7 +308,9 @@ class DatePicker {
   }
 
   handleInput(ev) {
-    if (this.regExDelete.test(ev.inputType)) return;
+    if (this.regExDelete.test(ev.inputType)) {
+      return;
+    }
 
     let cursorPosition = ev.target.selectionStart - 1;
     let inputFieldValue = ev.target.value;
@@ -306,8 +329,12 @@ class DatePicker {
     }
 
     if (cursorPosition === 2 || cursorPosition === 5) {
-      if (this.regExIsNumber.test(inputChar)) cursorPosition += 1;
-      else inputChar = '.';
+      if (this.regExIsNumber.test(inputChar)) {
+        cursorPosition += 1;
+      }
+      else {
+        inputChar = '.';
+      }
     } else if (this.regExIsNotNumber.test(inputChar)) {
       ev.target.value = formatDate(this.selectedDate);
       ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
@@ -320,11 +347,21 @@ class DatePicker {
     let inpMonth = inputFieldValue[3] + inputFieldValue[4];
     let inpYear = inputFieldValue[6] + inputFieldValue[7] + inputFieldValue[8] + inputFieldValue[9];
 
-    if (parseInt(inpDay) > 31) inpDay = '30';
-    else if (parseInt(inpDay) === 0) inpDay = '01';
-    if (parseInt(inpMonth) > 12) inpMonth = '12';
-    else if (parseInt(inpMonth) === 0) inpMonth = '01';
-    if (parseInt(inpYear) < 1000) inpYear = '1000';
+    if (parseInt(inpDay) > 31) {
+      inpDay = '30';
+    }
+    else if (parseInt(inpDay) === 0) {
+      inpDay = '01';
+    }
+    if (parseInt(inpMonth) > 12) {
+      inpMonth = '12';
+    }
+    else if (parseInt(inpMonth) === 0) {
+      inpMonth = '01';
+    }
+    if (parseInt(inpYear) < 1000) {
+      inpYear = '1000';
+    }
 
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
     if (this.date.toString() === 'Invalid Date') {
@@ -349,7 +386,7 @@ class DatePicker {
       value: formatDate(this.selectedDate)
     });
 
-    let monthHeader = createEl('div', 'month-header');
+    const monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
     this.nextMonthElement = createEl('div', 'arrows next', '>');
     this.monthElement = createEl('div', 'mth');
@@ -411,7 +448,9 @@ function getLocalDay(date) {
 function createEl(elName, classList, text = '', options = null) {
   const el = document.createElement(elName);
   el.classList = classList;
-  if (text) el.textContent = text;
+  if (text) {
+    el.textContent = text;
+  }
   if (options) {
     for (let key in options) {
       el[key] = options[key];
