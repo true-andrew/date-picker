@@ -46,7 +46,7 @@ class DatePicker {
       this.inputElement.focus();
       this.handleClickEvent(ev.target);
     } else if (ev.type === 'input') {
-      this.handleInput(ev);
+      this.handleInputEvent(ev);
     }
   }
 
@@ -312,7 +312,7 @@ class DatePicker {
     this.daysElement.replaceChildren(yearsContainer);
   }
 
-  handleInput(ev) {
+  handleInputEvent(ev) {
     if (this.regExDelete.test(ev.inputType)) {
       return;
     }
