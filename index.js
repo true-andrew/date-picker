@@ -18,7 +18,8 @@ class DatePicker {
   selectedDate = {
     year: undefined,
     month: undefined,
-    day: undefined
+    day: undefined,
+    equal: false
   }
   chooseMode = 'days';
   //regexp
@@ -100,9 +101,7 @@ class DatePicker {
   }
 
   goToMonth(month, year) {
-    if (this.selectedDate.month === Number(month)) {
-      this.selectedDate.month = -1;
-    }
+    this.selectedDate.equal = this.date.getMonth() !== Number(month);
     this.date.setFullYear(year);
     this.date.setMonth(month);
     this.renderDates();
@@ -176,15 +175,14 @@ class DatePicker {
   renderDates() {
     this.daysElement.classList.replace('months', 'days');
 
-    console.log(this.date, this.selectedDate);
-
     this.chooseMode = 'days';
     const currentDay = this.date.getDate();
     const currentMonth = this.date.getMonth();
     const currentYear = this.date.getFullYear();
 
-    if (currentMonth === this.selectedDate.month && currentYear === this.selectedDate.year) {
-
+    if (currentMonth === this.selectedDate.month && currentYear === this.selectedDate.year && !this.selectedDate.equal) {
+      this.setSelected(currentYear, currentMonth, currentDay);
+      return;
     }
 
     const todayDate = new Date();
@@ -410,19 +408,6 @@ class DatePicker {
 //Helper Functions
 function formatDate(d) {
   return d.toLocaleString('ru-RU').slice(0, 10);
-  // let day = d.getDate();
-  // if (day < 10) {
-  //   day = '0' + day;
-  // }
-  //
-  // let month = d.getMonth() + 1;
-  // if (month < 10) {
-  //   month = '0' + month;
-  // }
-  //
-  // let year = d.getFullYear();
-  //
-  // return day + '.' + month + '.' + year;
 }
 
 function getLocalDay(date) {
