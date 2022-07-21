@@ -113,6 +113,7 @@ body {
 
 .day.selected {
     background-color: #00CA85;
+    color: #262626;
 }
 
 .today {

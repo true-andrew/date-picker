@@ -13,12 +13,13 @@ class DatePicker {
   weekDays = undefined;
   daysElement = undefined;
   todayBtn = undefined;
-  selectedDayEl = undefined;
-  todayDayEl = undefined;
   //data
   date = undefined;
-  selectedDate = undefined;
-  yearStep = 0;
+  selectedDate = {
+    year: undefined,
+    month: undefined,
+    day: undefined
+  }
   chooseMode = 'days';
   //regexp
   regExDelete = /delete/;
@@ -28,210 +29,200 @@ class DatePicker {
   constructor(id) {
     this.container = document.getElementById(id);
     this.date = new Date();
-    this.selectedDate = new Date();
   }
 
   handleEvent(ev) {
     if (ev.type === 'focus') {
-      this.calendar.style.display = 'block';
+      this.handleFocusEvent(ev);
     } else if (ev.type === 'blur') {
-      if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) {
-        return;
-      }
-      if (this.chooseMode !== 'days') {
-        this.populateDates();
-      }
-      this.calendar.style.display = 'none';
+      this.handleBlurEvent(ev);
     } else if (ev.type === 'click') {
-      this.inputElement.focus();
-      this.handleClickEvent(ev.target);
+      this.handleClickEvent(ev);
     } else if (ev.type === 'input') {
       this.handleInputEvent(ev);
     }
   }
 
-  handleClickEvent(target) {
+  handleBlurEvent(ev) {
+    if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) {
+      return;
+    }
+    if (this.chooseMode !== 'days') {
+      this.renderDates();
+    }
+    this.calendar.style.display = 'none';
+  }
+
+  handleFocusEvent(ev) {
+    this.calendar.style.display = 'block';
+  }
+
+  handleClickEvent(ev) {
+    const target = ev.target;
+    this.inputElement.focus();
     switch (target) {
       case this.calendar.children[0]:
         return;
       case this.monthElement:
         if (this.chooseMode === 'days') {
-          this.populateMonths();
-        }
-        else if (this.chooseMode === 'months') {
-          this.populateYears();
+          this.renderMonths();
+        } else if (this.chooseMode === 'months') {
+          this.renderYears();
         }
         return;
       case this.nextMonthElement:
       case this.prevMonthElement:
         if (this.chooseMode === 'days') {
-          this.chooseDay(target);
-        }
-        else {
-          this.goToYear(target);
+          this.goToMonth(target.dataset.month, target.dataset.year);
+        } else {
+          this.goToYear(target.dataset.year);
         }
         return;
       case this.todayBtn:
-        this.setToday();
+        this.setToday(target);
         return;
       default:
-        if (target === this.daysElement) {
-          return;
-        }
-        if (this.chooseMode === 'days') {
-          this.chooseDay(target);
-        }
-        else if (this.chooseMode === 'months') {
-          this.chooseMonth(target);
-        }
-        else {
-          this.chooseYear(target);
+        if (target.classList.contains('day')) {
+          if (this.chooseMode === 'days') {
+            this.chooseDay(target);
+          } else if (this.chooseMode === 'months') {
+            this.chooseMonth(target);
+          } else {
+            this.chooseYear(target);
+          }
         }
         return;
     }
   }
 
-  setToday() {
-    let currentMonth = false;
-    this.selectedDate = new Date();
-    if (this.selectedDate.getFullYear() === this.date.getFullYear() && this.selectedDate.getMonth() === this.date.getMonth()) {
-      currentMonth = true;
-      this.selectedDayEl.classList.remove('selected');
-      this.selectedDayEl = this.todayDayEl;
-      this.selectedDayEl.classList.add('selected');
-    }
-    this.date = new Date();
-    this.inputElement.value = formatDate(this.date);
-    this.populateDates(currentMonth);
+  setToday(el) {
+    this.chooseDay(el);
   }
 
-  goToMonth(value) {
-    let month = this.date.getMonth() + value;
-    let year = this.date.getFullYear();
-    if (month === -1) {
-      month = 11;
-      year--;
-      this.date.setFullYear(year);
-    } else if (month === 12) {
-      month = 0;
-      year++;
-      this.date.setFullYear(year);
-    }
-    this.date.setMonth(month);
-    this.inputElement.value = formatDate(this.selectedDate);
-    this.populateDates();
-  }
-
-  goToYear(el) {
-    let year = this.date.getFullYear();
-    if (el.classList.contains('next')) {
-      year += this.yearStep;
-    } else {
-      year -= this.yearStep;
+  goToMonth(month, year) {
+    if (this.selectedDate.month === Number(month)) {
+      this.selectedDate.month = -1;
     }
     this.date.setFullYear(year);
-    this.selectedDate.setFullYear(year);
-    this.inputElement.value = formatDate(this.selectedDate);
+    this.date.setMonth(month);
+    this.renderDates();
+  }
 
-    if (this.yearStep === 1) {
-      this.populateMonths(true);
-      return;
+  goToYear(year) {
+    this.date.setFullYear(year);
+    if (this.chooseMode === 'months') {
+      this.renderMonths();
+    } else {
+      this.renderYears();
     }
-    this.populateYears();
   }
 
   chooseDay(el) {
+    const {year, month, day} = el.dataset;
     const prev = el.classList.contains('prev');
     const next = el.classList.contains('next');
+    const today = el.classList.contains('today');
+    const input = el.classList.contains('selected-date');
 
-    if (el.classList.contains('day')) {
-      const {year, month, day} = el.dataset;
-      this.selectedDayEl.classList.remove('selected');
-      this.selectedDayEl = el;
-      el.classList.add('selected');
-      this.selectedDate = new Date(parseInt(year), parseInt(month), parseInt(day));
-      this.inputElement.value = formatDate(this.selectedDate);
+    this.date.setDate(day);
+
+    if (prev || next || today || input) {
+      this.goToMonth(month, year);
     }
 
-    if (prev || next) {
-      prev ? this.goToMonth(-1) : this.goToMonth(1);
-    } else {
-      this.populateDates(true);
-    }
+    this.selectedDate.year = parseInt(year);
+    this.selectedDate.month = parseInt(month);
+    this.selectedDate.day = parseInt(day);
+
+    this.inputElement.value = formatDate(this.date);
+    this.setSelected(year, month, day);
   }
 
   chooseMonth(target) {
     const month = parseInt(target.dataset.month);
     this.weekDays.style = '';
     this.daysElement.classList.replace('months', 'days');
-    this.selectedDate.setMonth(month);
     this.date.setMonth(month);
-    this.inputElement.value = formatDate(this.selectedDate);
-    this.yearStep = 0;
-    this.populateDates();
+    this.renderDates();
   }
 
-  chooseYear(el) {
-    const year = parseInt(el.dataset.year);
+  chooseYear(target) {
+    const year = parseInt(target.dataset.year);
     this.date.setFullYear(year);
-    this.selectedDate.setFullYear(year);
-    this.inputElement.value = formatDate(this.selectedDate);
-    this.populateMonths();
+    this.renderMonths();
   }
 
-  populateDates(curMonth = false) {
-    this.daysElement.classList.replace('months', 'days');
+  writeDataset(el, year, month, day) {
+    el.dataset.year = year;
+    el.dataset.month = month;
+    el.dataset.day = day;
+  }
 
-    if (curMonth && this.chooseMode === 'days') {
+  setSelected(year, month, day) {
+    if (!year || !month || !day) {
       return;
     }
+    for (const dayEl of this.daysElement.children) {
+      if (dayEl.dataset.year === year.toString()
+        && dayEl.dataset.month === month.toString()
+        && dayEl.dataset.day === day.toString()) {
+        dayEl.classList.add('selected');
+      } else if (dayEl.classList.contains('selected')) {
+        dayEl.classList.remove('selected');
+      }
+    }
+  }
+
+  renderDates() {
+    this.daysElement.classList.replace('months', 'days');
+
+    console.log(this.date, this.selectedDate);
 
     this.chooseMode = 'days';
-    const month = this.date.getMonth();
-    const year = this.date.getFullYear();
-    const selectedDay = this.selectedDate.getDate();
-    const selectedMonth = this.selectedDate.getMonth();
-    const selectedYear = this.selectedDate.getFullYear();
+    const currentDay = this.date.getDate();
+    const currentMonth = this.date.getMonth();
+    const currentYear = this.date.getFullYear();
 
-    const today = new Date();
-    const todayDay = today.getDate();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
+    if (currentMonth === this.selectedDate.month && currentYear === this.selectedDate.year) {
 
-    const amount_days = new Date(year, month + 1, 0).getDate();
-    const curMonthFirstDayIndex = getLocalDay(new Date(year, month, 1));
-    const lastDayMonthBefore = new Date(year, month, 0).getDate();
-    const curMonthEndDayIndex = getLocalDay(new Date(year, month + 1, 0));
+    }
+
+    const todayDate = new Date();
+    const todayDay = todayDate.getDate();
+    const todayMonth = todayDate.getMonth();
+    const todayYear = todayDate.getFullYear();
+
+    const prevMonth = new Date(currentYear, currentMonth, 0);
+    const nextMonth = new Date(currentYear, currentMonth + 1, 1);
+
+    this.writeDataset(this.prevMonthElement, prevMonth.getFullYear(), prevMonth.getMonth());
+    this.writeDataset(this.nextMonthElement, nextMonth.getFullYear(), nextMonth.getMonth());
+
+    const lastDayCurMonth = new Date(currentYear, currentMonth + 1, 0);
+    const amountDays = lastDayCurMonth.getDate();
+    const curMonthEndDayIndex = getLocalDay(lastDayCurMonth);
+    const curMonthFirstDayIndex = getLocalDay(new Date(currentYear, currentMonth, 1));
+    const lastDayMonthBefore = prevMonth.getDate();
     let firstDayNextMonth = 1;
 
     const daysContainer = document.createDocumentFragment();
 
-    this.monthElement.textContent = MONTHS[month] + ' ' + year;
+    this.monthElement.textContent = MONTHS[currentMonth] + ' ' + currentYear;
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
-
-      const dayElement = createEl('div', 'day prev', String(lastDayMonthBefore - i + 1));
-      dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = (month - 1).toString();
-      dayElement.dataset.day = (lastDayMonthBefore - i + 1).toString();
-
+      const dayNum = lastDayMonthBefore - i + 1;
+      const dayElement = createEl('div', 'day prev', String(dayNum));
+      this.writeDataset(dayElement, prevMonth.getFullYear(), prevMonth.getMonth(), dayNum);
       daysContainer.append(dayElement);
     }
 
-    for (let i = 0; i < amount_days; i++) {
-      const dayElement = createEl('div', 'day', String(i + 1));
-      dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = (month).toString();
-      dayElement.dataset.day = (i + 1).toString();
+    for (let i = 0; i < amountDays; i++) {
+      const dayNum = i + 1;
+      const dayElement = createEl('div', 'day', String(dayNum));
+      this.writeDataset(dayElement, currentYear, currentMonth, dayNum);
 
-      if (selectedDay === (i + 1) && selectedYear === year && selectedMonth === month) {
-        dayElement.classList.add('selected');
-        this.selectedDayEl = dayElement;
-      }
-
-      if (todayDay === (i + 1) && todayMonth === month && todayYear === year) {
+      if (todayDay === (i + 1) && todayMonth === currentMonth && todayYear === currentYear) {
         dayElement.classList.add('today');
-        this.todayDayEl = dayElement;
       }
 
       daysContainer.append(dayElement);
@@ -239,28 +230,26 @@ class DatePicker {
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
       const dayElement = createEl('div', 'day next', String(firstDayNextMonth));
-      const dayNumber = firstDayNextMonth++;
-      dayElement.dataset.year = year.toString();
-      dayElement.dataset.month = (month + 1).toString();
-      dayElement.dataset.day = dayNumber.toString();
-
+      const dayNum = firstDayNextMonth++;
+      this.writeDataset(dayElement, nextMonth.getFullYear(), nextMonth.getMonth(), dayNum);
       daysContainer.append(dayElement);
     }
 
     this.daysElement.replaceChildren(daysContainer);
+
+
+    this.setSelected(this.selectedDate.year, this.selectedDate.month, this.selectedDate.day);
   }
 
-  populateMonths(cur = false) {
-    this.monthElement.textContent = this.selectedDate.getFullYear().toString();
-
-    if (cur) {
-      return;
-    }
+  renderMonths() {
+    this.monthElement.textContent = this.date.getFullYear().toString();
 
     this.chooseMode = 'months';
-    this.yearStep = 1;
     this.weekDays.style = 'display: none;';
     this.daysElement.classList.replace('days', 'months');
+
+    this.writeDataset(this.prevMonthElement, this.date.getFullYear() - 1);
+    this.writeDataset(this.nextMonthElement, this.date.getFullYear() + 1);
 
     const monthsContainer = document.createDocumentFragment();
 
@@ -268,7 +257,7 @@ class DatePicker {
       const month = MONTHS[i];
       const monthEl = createEl('div', 'day', month);
 
-      if (this.selectedDate.getFullYear() === this.date.getFullYear() && this.selectedDate.getMonth() === i) {
+      if (this.date.getFullYear() === this.selectedDate.year && this.date.getMonth() === i) {
         monthEl.classList.add('selected');
       }
 
@@ -280,12 +269,14 @@ class DatePicker {
     this.daysElement.replaceChildren(monthsContainer);
   }
 
-  populateYears() {
+  renderYears() {
     this.chooseMode = 'years';
     const curYear = this.date.getFullYear();
-    this.yearStep = 10;
     this.monthElement.textContent = curYear + ' - ' + (curYear + 9);
     this.daysElement.classList.replace('days', 'months');
+
+    this.writeDataset(this.prevMonthElement, this.date.getFullYear() - 10);
+    this.writeDataset(this.nextMonthElement, this.date.getFullYear() + 10);
 
     const yearsContainer = document.createDocumentFragment();
 
@@ -296,7 +287,7 @@ class DatePicker {
 
       yearEl.dataset.year = year.toString();
 
-      if (this.selectedDate.getFullYear() === year) {
+      if (this.selectedDate.year === year) {
         yearEl.classList.add('selected');
       }
 
@@ -322,7 +313,7 @@ class DatePicker {
     let inputChar = ev.data;
 
     if (inputFieldValue.length <= 10) {
-      inputFieldValue = formatDate(this.selectedDate).split('');
+      inputFieldValue = formatDate(this.date).split('');
     } else {
       inputFieldValue = inputFieldValue.split('');
       inputFieldValue.splice(cursorPosition, 1);
@@ -336,12 +327,11 @@ class DatePicker {
     if (cursorPosition === 2 || cursorPosition === 5) {
       if (this.regExIsNumber.test(inputChar)) {
         cursorPosition += 1;
-      }
-      else {
+      } else {
         inputChar = '.';
       }
     } else if (this.regExIsNotNumber.test(inputChar)) {
-      ev.target.value = formatDate(this.selectedDate);
+      ev.target.value = formatDate(this.date);
       ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
       return;
     }
@@ -354,14 +344,12 @@ class DatePicker {
 
     if (parseInt(inpDay) > 31) {
       inpDay = '30';
-    }
-    else if (parseInt(inpDay) === 0) {
+    } else if (parseInt(inpDay) === 0) {
       inpDay = '01';
     }
     if (parseInt(inpMonth) > 12) {
       inpMonth = '12';
-    }
-    else if (parseInt(inpMonth) === 0) {
+    } else if (parseInt(inpMonth) === 0) {
       inpMonth = '01';
     }
     if (parseInt(inpYear) < 1000) {
@@ -369,27 +357,22 @@ class DatePicker {
     }
 
     this.date = new Date(inpYear + '-' + inpMonth + '-' + inpDay);
-    if (this.date.toString() === 'Invalid Date') {
-      ev.target.value = formatDate(this.selectedDate);
-      ev.target.selectionStart = ev.target.selectionEnd = cursorPosition;
-      return;
-    }
-    this.selectedDate = new Date(this.date);
+
     ev.target.value = formatDate(this.date);
     ev.target.selectionStart = ev.target.selectionEnd = cursorPosition + 1;
-    this.populateDates();
+    this.writeDataset(ev.target, this.date.getFullYear(), this.date.getMonth(), this.date.getDate());
+    this.chooseDay(ev.target);
   }
 
 
   render() {
-    this.calendar = createEl('div', 'calendar', '', {tabIndex: -1});
-
     this.inputElement = createEl('input', 'selected-date', '', {
       type: 'text',
       placeholder: 'DD.MM.YYYY',
       maxLength: 11,
-      value: formatDate(this.selectedDate)
     });
+
+    this.calendar = createEl('div', 'calendar', '', {tabIndex: -1});
 
     const monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
@@ -408,6 +391,7 @@ class DatePicker {
     this.daysElement = createEl('div', 'visible-area days');
 
     this.todayBtn = createEl('button', 'btn today', 'Сегодня');
+    this.writeDataset(this.todayBtn, this.date.getFullYear(), this.date.getMonth(), this.date.getDate());
 
     this.calendar.append(monthHeader, this.weekDays, this.daysElement, this.todayBtn);
 
@@ -418,26 +402,27 @@ class DatePicker {
 
     this.container.append(this.inputElement, this.calendar);
 
-    this.populateDates();
+    this.renderDates();
   }
 }
 
 
 //Helper Functions
 function formatDate(d) {
-  let day = d.getDate();
-  if (day < 10) {
-    day = '0' + day;
-  }
-
-  let month = d.getMonth() + 1;
-  if (month < 10) {
-    month = '0' + month;
-  }
-
-  let year = d.getFullYear();
-
-  return day + '.' + month + '.' + year;
+  return d.toLocaleString('ru-RU').slice(0, 10);
+  // let day = d.getDate();
+  // if (day < 10) {
+  //   day = '0' + day;
+  // }
+  //
+  // let month = d.getMonth() + 1;
+  // if (month < 10) {
+  //   month = '0' + month;
+  // }
+  //
+  // let year = d.getFullYear();
+  //
+  // return day + '.' + month + '.' + year;
 }
 
 function getLocalDay(date) {
@@ -450,7 +435,7 @@ function getLocalDay(date) {
   return day;
 }
 
-function createEl(elName, classList, text = '', options = null) {
+function createEl(elName, classList, text, options) {
   const el = document.createElement(elName);
   el.classList = classList;
   if (text) {
