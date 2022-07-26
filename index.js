@@ -28,9 +28,9 @@ class DatePicker {
 
   handleEvent(ev) {
     if (ev.type === 'focus') {
-      // this.handleFocusEvent(ev);
+      this.handleFocusEvent(ev);
     } else if (ev.type === 'blur') {
-      // this.handleBlurEvent(ev);
+      this.handleBlurEvent(ev);
     } else if (ev.type === 'click') {
       this.handleClickEvent(ev);
     } else if (ev.type === 'input') {
@@ -46,7 +46,7 @@ class DatePicker {
     }
 
     if (this.calendar.dataset.status !== 'days') {
-      this.renderDays();
+      this.renderDays(this.displayedDate.getMonth(), this.displayedDate.getFullYear());
     }
 
     this.hide();
@@ -125,14 +125,6 @@ class DatePicker {
     }
   }
 
-  /*
-  setDate -> renderCalendar -> switch mode -> renderDays | renderMonth | renderYear
-          -> setValueInput
-
-  renderDays -> if(curMonth) | if(curDay || curYear || curMonth) | if(curYear)
-   */
-
-
   renderDays(month, year) {
     this.daysElement.classList.replace('months', 'days');
 
@@ -141,16 +133,18 @@ class DatePicker {
 
     if (this.selectedDate && equalMonth && equalYear) {
       this.setSelected(this.daysElement, this.selectedDate);
-      this.displayedDate.setDate(this.selectedDate.getDate());
       return;
     } else {
       this.displayedDate.setFullYear(year);
       this.displayedDate.setMonth(month);
     }
 
+    const currentMonth = this.displayedDate.getMonth();
+    const currentYear = this.displayedDate.getFullYear();
+
     this.writeDataset(this.monthElement, {
-      year: this.displayedDate.getFullYear(),
-      month: this.displayedDate.getMonth(),
+      year: currentYear,
+      month: currentMonth,
       mode: 'Months',
       action: 'navigateCalendar',
     });
@@ -161,8 +155,8 @@ class DatePicker {
     const todayMonth = todayDate.getMonth();
     const todayYear = todayDate.getFullYear();
 
-    const prevMonth = new Date(this.displayedDate.getFullYear(), this.displayedDate.getMonth(), 0);
-    const nextMonth = new Date(this.displayedDate.getFullYear(), this.displayedDate.getMonth() + 1, 1);
+    const prevMonth = new Date(currentYear, currentMonth, 0);
+    const nextMonth = new Date(currentYear, currentMonth + 1, 1);
 
     this.writeDataset(this.prevMonthElement, {
       year: prevMonth.getFullYear(),
@@ -180,13 +174,13 @@ class DatePicker {
     const lastDayCurMonth = getLastDayOfMonth(this.displayedDate);
     const amountDays = lastDayCurMonth.getDate();
     const curMonthEndDayIndex = getLocalDay(lastDayCurMonth);
-    const curMonthFirstDayIndex = getLocalDay(new Date(this.displayedDate.getFullYear(), this.displayedDate.getMonth(), 1));
+    const curMonthFirstDayIndex = getLocalDay(new Date(currentYear, currentMonth, 1));
     const lastDayMonthBefore = prevMonth.getDate();
     let firstDayNextMonth = 1;
 
     const daysContainer = document.createDocumentFragment();
 
-    this.monthElement.textContent = MONTHS[this.displayedDate.getMonth()] + ' ' + this.displayedDate.getFullYear();
+    this.monthElement.textContent = MONTHS[currentMonth] + ' ' + currentYear;
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
       const dayNum = lastDayMonthBefore - i + 1;
@@ -195,7 +189,6 @@ class DatePicker {
         year: prevMonth.getFullYear(),
         month: prevMonth.getMonth(),
         day: dayNum,
-        mode: 'Days',
         action: 'pickDate'
       });
       daysContainer.append(dayElement);
@@ -205,14 +198,13 @@ class DatePicker {
       const dayNum = i + 1;
       const dayElement = createEl('div', 'day', String(dayNum));
       this.writeDataset(dayElement, {
-        year: this.displayedDate.getFullYear(),
-        month: this.displayedDate.getMonth(),
+        year: currentYear,
+        month: currentMonth,
         day: dayNum,
-        mode: 'Days',
         action: 'pickDate'
       });
 
-      if (todayDay === (i + 1) && todayMonth === this.displayedDate.getMonth() && todayYear === this.displayedDate.getFullYear()) {
+      if (todayDay === (i + 1) && todayMonth === currentMonth && todayYear === currentYear) {
         dayElement.classList.add('today');
       }
 
@@ -226,7 +218,6 @@ class DatePicker {
         year: nextMonth.getFullYear(),
         month: nextMonth.getMonth(),
         day: dayNum,
-        mode: 'Days',
         action: 'pickDate'
       });
       daysContainer.append(dayElement);
@@ -276,7 +267,6 @@ class DatePicker {
         mode: 'Days',
         action: 'navigateCalendar'
       });
-      monthEl.dataset.mode = 'Days';
 
       monthsContainer.append(monthEl);
     }
@@ -285,8 +275,7 @@ class DatePicker {
   }
 
   renderYears(month, year) {
-    const curYear = year;
-    this.monthElement.textContent = curYear + ' - ' + (+curYear + 9);
+    this.monthElement.textContent = year + ' - ' + (+year + 9);
 
     this.writeDataset(this.prevMonthElement, {
       year: +year - 10,
@@ -304,7 +293,7 @@ class DatePicker {
     const yearsContainer = document.createDocumentFragment();
 
     for (let i = 0; i < 12; i++) {
-      const yearIterator = curYear - 1 + i;
+      const yearIterator = year - 1 + i;
 
       const yearEl = createEl('div', 'day', String(yearIterator));
       this.writeDataset(yearEl, {
@@ -378,7 +367,7 @@ class DatePicker {
       inpMonth = 0;
     }
     if (inpYear < 1000) {
-      inpYear = 1900;
+      inpYear = 1000;
     }
 
     this.displayedDate.setDate(inpDay);
@@ -426,7 +415,6 @@ class DatePicker {
       year: this.displayedDate.getFullYear(),
       month: this.displayedDate.getMonth(),
       day: this.displayedDate.getDate(),
-      mode: 'Days',
       action: 'pickDate'
     });
 
