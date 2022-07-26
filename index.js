@@ -79,6 +79,8 @@ class DatePicker {
       throw new Error('Incorrect Date');
     }
     this.selectedDate = new Date(date);
+    setInputFieldValue(this.inputElement, this.selectedDate);
+    this.renderCalendar(this.selectedDate.getMonth(), this.selectedDate.getFullYear());
   }
 
   parseDateFromElement(el) {
@@ -93,8 +95,6 @@ class DatePicker {
 
   pickDate(el) {
     this.setDate(this.parseDateFromElement(el));
-    setInputFieldValue(this.inputElement, this.selectedDate);
-    this.renderCalendar(el.dataset.month, el.dataset.year);
   }
 
   writeDataset(el, dataset) {
