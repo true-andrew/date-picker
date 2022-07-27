@@ -45,7 +45,7 @@ class DatePicker {
       return;
     }
 
-    if (this.calendar.dataset.status !== 'days') {
+    if (this.calendar.dataset.mode !== 'days') {
       this.renderDays(this.displayedDate.getMonth(), this.displayedDate.getFullYear());
     }
 
@@ -89,7 +89,7 @@ class DatePicker {
   }
 
   navigateCalendar(el) {
-    this.calendar.dataset.status = el.dataset.mode;
+    this.calendar.dataset.mode = el.dataset.mode;
     this.renderCalendar(el.dataset.month, el.dataset.year);
   }
 
@@ -118,7 +118,7 @@ class DatePicker {
   }
 
   renderCalendar(month, year) {
-    const displayMode = this.calendar.dataset.status;
+    const displayMode = this.calendar.dataset.mode;
 
     if (displayMode !== undefined) {
       this[`render${displayMode}`](month, year);
@@ -391,7 +391,7 @@ class DatePicker {
     });
 
     this.calendar = createEl('div', 'calendar', '', {tabIndex: -1});
-    this.writeDataset(this.calendar, {status: 'Days'});
+    this.writeDataset(this.calendar, {mode: 'Days'});
 
     const monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
