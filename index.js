@@ -103,7 +103,7 @@ class DatePicker {
     }
   }
 
-  setSelected(daysContainer, date) {
+  setSelectedElement(daysContainer, date) {
     const arr = daysContainer.children;
     for (let i = 0, len = arr.length; i < len; i++) {
       const el = arr[i];
@@ -132,7 +132,7 @@ class DatePicker {
     const equalYear = this.displayedDate.getFullYear() === +year;
 
     if (this.selectedDate && equalMonth && equalYear) {
-      this.setSelected(this.daysElement, this.selectedDate);
+      this.setSelectedElement(this.daysElement, this.selectedDate);
       return;
     } else {
       this.displayedDate.setFullYear(year);
@@ -224,7 +224,7 @@ class DatePicker {
     }
 
     if (this.selectedDate) {
-      this.setSelected(daysContainer, this.selectedDate);
+      this.setSelectedElement(daysContainer, this.selectedDate);
     }
 
     this.daysElement.replaceChildren(daysContainer);
@@ -383,7 +383,6 @@ class DatePicker {
     ev.target.selectionStart = ev.target.selectionEnd = cursorPosition + 1;
   }
 
-
   render() {
     this.inputElement = createEl('input', 'selected-date', '', {
       type: 'text',
@@ -431,7 +430,6 @@ class DatePicker {
     this.renderCalendar(this.displayedDate.getMonth(), this.displayedDate.getFullYear());
   }
 }
-
 
 //Helper Functions
 function setInputFieldValue(input, date) {
