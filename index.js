@@ -16,6 +16,7 @@ class DatePicker {
   //data
   displayedDate = undefined;
   selectedDate = undefined;
+  viewMode = undefined;
   //regexp
   regExDelete = /delete/;
   regExIsNumber = /\d/;
@@ -24,6 +25,7 @@ class DatePicker {
   constructor(id) {
     this.container = document.getElementById(id);
     this.displayedDate = new Date();
+    this.render();
   }
 
   handleEvent(ev) {
@@ -70,13 +72,17 @@ class DatePicker {
     this.calendar.style.display = 'none';
   }
 
+  setInputFieldValue(date) {
+    this.inputElement.value = formatDate(date);
+  }
+
   setDate(date) {
     if (isNaN(Date.parse(date))) {
       throw new Error('Incorrect Date');
     }
     this.selectedDate = new Date(date);
-    setInputFieldValue(this.inputElement, this.selectedDate);
-    this.renderCalendar(this.selectedDate.getFullYear(), this.selectedDate.getMonth());
+    this.setInputFieldValue(this.selectedDate);
+    this.renderDays(this.selectedDate.getFullYear(), this.selectedDate.getMonth());
   }
 
   parseDateFromElement(el) {
@@ -85,18 +91,14 @@ class DatePicker {
   }
 
   navigateCalendar(el) {
-    this.calendar.dataset.mode = el.dataset.mode;
+    if (el.dataset.mode) {
+      this.viewMode = el.dataset.mode;
+    }
     this.renderCalendar(el.dataset.year, el.dataset.month);
   }
 
   pickDate(el) {
     this.setDate(this.parseDateFromElement(el));
-  }
-
-  writeDataset(el, dataset) {
-    for (let key in dataset) {
-      el.dataset[key] = dataset[key];
-    }
   }
 
   setSelectedElement(daysContainer, date) {
@@ -114,10 +116,14 @@ class DatePicker {
   }
 
   renderCalendar(year, month) {
-    const displayMode = this.calendar.dataset.mode;
-
-    if (displayMode !== undefined) {
-      this[`render${displayMode}`](year, month);
+    if (this.viewMode === 'days') {
+      this.renderDays(year, month);
+    } else if (this.viewMode === 'months') {
+      this.renderMonths(year);
+    } else if (this.viewMode === 'years') {
+      this.renderYears(year);
+    } else {
+      throw new Error(`Incorrect view mode: ${this.viewMode}`);
     }
   }
 
@@ -138,7 +144,7 @@ class DatePicker {
     const currentMonth = this.displayedDate.getMonth();
     const currentYear = this.displayedDate.getFullYear();
 
-    this.writeDataset(this.monthElement, {
+    writeDataset(this.monthElement, {
       year: currentYear,
       mode: 'Months',
       action: 'navigateCalendar',
@@ -153,16 +159,14 @@ class DatePicker {
     const prevMonth = new Date(currentYear, currentMonth, 0);
     const nextMonth = new Date(currentYear, currentMonth + 1, 1);
 
-    this.writeDataset(this.prevMonthElement, {
+    writeDataset(this.prevMonthElement, {
       year: prevMonth.getFullYear(),
       month: prevMonth.getMonth(),
-      mode: 'Days',
       action: 'navigateCalendar'
     });
-    this.writeDataset(this.nextMonthElement, {
+    writeDataset(this.nextMonthElement, {
       year: nextMonth.getFullYear(),
       month: nextMonth.getMonth(),
-      mode: 'Days',
       action: 'navigateCalendar'
     });
 
@@ -179,8 +183,7 @@ class DatePicker {
 
     for (let i = curMonthFirstDayIndex - 1; i >= 1; i--) {
       const dayNum = lastDayMonthBefore - i + 1;
-      const dayElement = createEl('div', 'day prev', String(dayNum));
-      this.writeDataset(dayElement, {
+      const dayElement = createEl('div', 'day prev', String(dayNum), undefined, {
         year: prevMonth.getFullYear(),
         month: prevMonth.getMonth(),
         day: dayNum,
@@ -191,8 +194,7 @@ class DatePicker {
 
     for (let i = 0; i < amountDays; i++) {
       const dayNum = i + 1;
-      const dayElement = createEl('div', 'day', String(dayNum));
-      this.writeDataset(dayElement, {
+      const dayElement = createEl('div', 'day', String(dayNum), undefined, {
         year: currentYear,
         month: currentMonth,
         day: dayNum,
@@ -207,9 +209,8 @@ class DatePicker {
     }
 
     for (let i = curMonthEndDayIndex + 1; i <= 7; i++) {
-      const dayElement = createEl('div', 'day next', String(firstDayNextMonth));
       const dayNum = firstDayNextMonth++;
-      this.writeDataset(dayElement, {
+      const dayElement = createEl('div', 'day next', String(firstDayNextMonth), undefined, {
         year: nextMonth.getFullYear(),
         month: nextMonth.getMonth(),
         day: dayNum,
@@ -228,22 +229,21 @@ class DatePicker {
 
   renderMonths(year) {
     this.monthElement.textContent = year;
-    this.weekDays.style = 'display: none;';
+    const yearNum = parseInt(year);
+    this.weekDays.style.display = 'none';
     this.daysElement.classList.replace('days', 'months');
 
-    this.writeDataset(this.monthElement, {
+    writeDataset(this.monthElement, {
       year: year,
-      mode: 'Years',
+      mode: 'years',
       action: 'navigateCalendar'
     })
-    this.writeDataset(this.prevMonthElement, {
-      year: +year - 1,
-      mode: 'Months',
+    writeDataset(this.prevMonthElement, {
+      year: yearNum - 1,
       action: 'navigateCalendar'
     });
-    this.writeDataset(this.nextMonthElement, {
-      year: +year + 1,
-      mode: 'Months',
+    writeDataset(this.nextMonthElement, {
+      year: yearNum + 1,
       action: 'navigateCalendar'
     });
 
@@ -251,12 +251,10 @@ class DatePicker {
 
     for (let i = 0; i < 12; i++) {
       const monthName = MONTHS[i];
-      const monthEl = createEl('div', 'day', monthName);
-
-      this.writeDataset(monthEl, {
+      const monthEl = createEl('div', 'day', monthName, undefined, {
         year: year,
         month: i,
-        mode: 'Days',
+        mode: 'days',
         action: 'navigateCalendar'
       });
 
@@ -268,15 +266,14 @@ class DatePicker {
 
   renderYears(year) {
     this.monthElement.textContent = year + ' - ' + (+year + 9);
+    const yearNum = parseInt(year);
 
-    this.writeDataset(this.prevMonthElement, {
-      year: +year - 10,
-      mode: 'Years',
+    writeDataset(this.prevMonthElement, {
+      year: yearNum - 10,
       action: 'navigateCalendar'
     });
-    this.writeDataset(this.nextMonthElement, {
-      year: +year + 10,
-      mode: 'Years',
+    writeDataset(this.nextMonthElement, {
+      year: yearNum + 10,
       action: 'navigateCalendar'
     });
 
@@ -285,10 +282,9 @@ class DatePicker {
     for (let i = 0; i < 12; i++) {
       const yearIterator = year - 1 + i;
 
-      const yearEl = createEl('div', 'day', String(yearIterator));
-      this.writeDataset(yearEl, {
+      const yearEl = createEl('div', 'day', String(yearIterator), undefined, {
         year: yearIterator,
-        mode: 'Months',
+        mode: 'months',
         action: 'navigateCalendar'
       });
 
@@ -359,9 +355,7 @@ class DatePicker {
       inpYear = 1000;
     }
 
-    this.displayedDate.setDate(inpDay);
-
-    this.writeDataset(ev.target, {
+    writeDataset(ev.target, {
       year: inpYear,
       month: inpMonth,
       day: inpDay
@@ -380,7 +374,6 @@ class DatePicker {
     });
 
     this.calendar = createEl('div', 'calendar', '', {tabIndex: -1});
-    this.writeDataset(this.calendar, {mode: 'Days'});
 
     const monthHeader = createEl('div', 'month-header');
     this.prevMonthElement = createEl('div', 'arrows prev', '<');
@@ -398,8 +391,7 @@ class DatePicker {
 
     this.daysElement = createEl('div', 'visible-area days');
 
-    this.todayBtn = createEl('button', 'btn today', 'Сегодня');
-    this.writeDataset(this.todayBtn, {
+    this.todayBtn = createEl('button', 'btn today', 'Сегодня', undefined, {
       year: this.displayedDate.getFullYear(),
       month: this.displayedDate.getMonth(),
       day: this.displayedDate.getDate(),
@@ -416,13 +408,17 @@ class DatePicker {
 
     this.container.append(this.inputElement, this.calendar);
 
+    this.viewMode = 'days';
+
     this.renderCalendar(this.displayedDate.getFullYear(), this.displayedDate.getMonth());
   }
 }
 
 //Helper Functions
-function setInputFieldValue(input, date) {
-  input.value = formatDate(date);
+function writeDataset(el, dataset) {
+  for (let key in dataset) {
+    el.dataset[key] = dataset[key];
+  }
 }
 
 function getLastDayOfMonth(date) {
@@ -443,7 +439,7 @@ function getLocalDay(date) {
   return day;
 }
 
-function createEl(elName, classList, text, options) {
+function createEl(elName, classList, text, options, dataset) {
   const el = document.createElement(elName);
   el.classList = classList;
   if (text) {
@@ -454,8 +450,10 @@ function createEl(elName, classList, text, options) {
       el[key] = options[key];
     }
   }
+  if (dataset) {
+    writeDataset(el, dataset);
+  }
   return el;
 }
 
 const calendar1 = new DatePicker('date-picker-1');
-calendar1.render();
