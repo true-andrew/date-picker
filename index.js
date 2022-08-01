@@ -29,20 +29,15 @@ class DatePicker {
   }
 
   handleEvent(ev) {
-    if (ev.type === 'focus') {
-      this.handleFocusEvent(ev);
-    } else if (ev.type === 'blur') {
-      this.handleBlurEvent(ev);
-    } else if (ev.type === 'click') {
-      this.handleClickEvent(ev);
-    } else if (ev.type === 'input') {
-      this.handleInputEvent(ev);
+    const eventName = 'handleEvent_'+ ev.type;
+    if (this[eventName] !== undefined) {
+      this[eventName](ev);
     } else {
-      console.warn('Unhandled event: ', ev);
+      throw new Error('Unhandled event');
     }
   }
 
-  handleBlurEvent(ev) {
+  handleEvent_blur(ev) {
     if ((ev.relatedTarget === this.calendar) || (ev.relatedTarget === this.todayBtn)) {
       return;
     }
@@ -50,11 +45,11 @@ class DatePicker {
     this.hide();
   }
 
-  handleFocusEvent(ev) {
+  handleEvent_focus(ev) {
     this.show();
   }
 
-  handleClickEvent(ev) {
+  handleEvent_click(ev) {
     const target = ev.target;
     const action = target.dataset.action;
     this.inputElement.focus();
@@ -90,6 +85,10 @@ class DatePicker {
     return new Date(year, month, day);
   }
 
+  pickDate(el) {
+    this.setDate(this.parseDateFromElement(el));
+  }
+
   navigateCalendar(el) {
     if (el.dataset.mode) {
       this.viewMode = el.dataset.mode;
@@ -97,8 +96,16 @@ class DatePicker {
     this.renderCalendar(el.dataset.year, el.dataset.month);
   }
 
-  pickDate(el) {
-    this.setDate(this.parseDateFromElement(el));
+  renderCalendar(year, month) {
+    if (this.viewMode === 'days') {
+      this.renderDays(year, month);
+    } else if (this.viewMode === 'months') {
+      this.renderMonths(year);
+    } else if (this.viewMode === 'years') {
+      this.renderYears(year);
+    } else {
+      throw new Error(`Incorrect view mode: ${this.viewMode}`);
+    }
   }
 
   setSelectedElement(daysContainer, date) {
@@ -112,18 +119,6 @@ class DatePicker {
       } else if (el.classList.contains('selected')) {
         el.classList.remove('selected');
       }
-    }
-  }
-
-  renderCalendar(year, month) {
-    if (this.viewMode === 'days') {
-      this.renderDays(year, month);
-    } else if (this.viewMode === 'months') {
-      this.renderMonths(year);
-    } else if (this.viewMode === 'years') {
-      this.renderYears(year);
-    } else {
-      throw new Error(`Incorrect view mode: ${this.viewMode}`);
     }
   }
 
@@ -146,7 +141,7 @@ class DatePicker {
 
     writeDataset(this.monthElement, {
       year: currentYear,
-      mode: 'Months',
+      mode: 'months',
       action: 'navigateCalendar',
     });
     this.weekDays.style = '';
@@ -300,7 +295,7 @@ class DatePicker {
     this.daysElement.replaceChildren(yearsContainer);
   }
 
-  handleInputEvent(ev) {
+  handleEvent_input(ev) {
     if (this.regExDelete.test(ev.inputType)) {
       return;
     }
